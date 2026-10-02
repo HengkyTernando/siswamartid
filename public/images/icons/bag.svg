@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <!-- Bag Body -->
+    <path fill="#60A5FA" d="M12 24h40l-4 32H16z"/>
+    <!-- Bag Front Detail -->
+    <path fill="#93C5FD" d="M16 24h32v8H16z"/>
+    <!-- Handle -->
+    <path fill="none" stroke="#2563EB" stroke-width="4" stroke-linecap="round" d="M24 24v-6a8 8 0 0 1 16 0v6"/>
+    <!-- Sparkles -->
+    <circle cx="24" cy="40" r="2" fill="#EFF6FF"/>
+    <circle cx="40" cy="48" r="3" fill="#EFF6FF"/>
+</svg>

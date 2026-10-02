@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <!-- Box -->
+    <path fill="#FCA5A5" d="M20 32h24l-4 28H24z"/>
+    <!-- Stripes -->
+    <path fill="#F87171" d="M24 32h4l-1 28h-4zM36 32h4l-1 28h-4z"/>
+    <!-- Popcorn -->
+    <circle cx="32" cy="24" r="8" fill="#FEF08A"/>
+    <circle cx="24" cy="28" r="6" fill="#FDE047"/>
+    <circle cx="40" cy="28" r="6" fill="#FDE047"/>
+    <circle cx="28" cy="18" r="5" fill="#FEF08A"/>
+    <circle cx="36" cy="18" r="5" fill="#FEF08A"/>
+</svg>

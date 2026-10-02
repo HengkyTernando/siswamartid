@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <!-- Straw -->
+    <path fill="#F87171" d="M38 8L32 20h-4l6-12h4z"/>
+    <!-- Cup -->
+    <path fill="#93C5FD" d="M18 24h28l-4 32H22z"/>
+    <path fill="#60A5FA" d="M22 56h10V24H18l4 32z"/>
+    <!-- Lid -->
+    <path fill="#EFF6FF" d="M16 20h32v4H16z"/>
+    <!-- Drink Level -->
+    <path fill="#FCD34D" d="M20 32h24l-2 16H22z"/>
+</svg>

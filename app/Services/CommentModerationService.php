@@ -1,0 +1,290 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\BadWord;
+use App\Models\Whitelist;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+
+class CommentModerationService
+{
+    protected const CACHE_BAD_WORDS_KEY = 'moderation_active_bad_words_v2';
+    protected const CACHE_WHITELISTS_KEY = 'moderation_active_whitelists_v2';
+    protected const CACHE_TTL = 86400; // 24 jam
+
+    /**
+     * Jalankan moderasi lengkap pada teks komentar.
+     *
+     * Alur: normalizeText() -> checkWhitelist() -> detectBadWords() -> returnModerationResult()
+     *
+     * @param string|null $text
+     * @return array{
+     *     detected: bool,
+     *     words: array<string>,
+     *     severity: string,
+     *     censored_text: string,
+     *     match_count: int
+     * }
+     */
+    public function moderate(?string $text): array
+    {
+        if (empty($text) || trim($text) === '') {
+            return [
+                'detected'      => false,
+                'words'         => [],
+                'severity'      => 'none',
+                'censored_text' => '',
+                'match_count'   => 0,
+            ];
+        }
+
+        [$normalizedText, $originalStartByByte, $originalEndByByte] = $this->normalizeWithOffsets($text);
+
+        // Periksa whitelist (dapat berupa frasa yang dikecualikan)
+        $whitelists = $this->getActiveWhitelists();
+
+        // Cari badwords yang aktif
+        $badWordsData = $this->getActiveBadWords();
+
+        if (empty($badWordsData)) {
+            return [
+                'detected'      => false,
+                'words'         => [],
+                'severity'      => 'none',
+                'censored_text' => $text,
+                'match_count'   => 0,
+            ];
+        }
+
+        // Teks sementara untuk pemrosesan regex
+        $censoredText = $text;
+        $matchedOriginalRanges = [];
+        $detectedWords = [];
+        $highestSeverityScore = 0; // 1: low, 2: medium, 3: high
+        $matchCount = 0;
+
+        // Mask kata-kata whitelist agar tidak memicu false positive
+        $maskedText = $normalizedText;
+        foreach ($whitelists as $whitelistPhrase) {
+            [$cleanPhrase] = $this->normalizeWithOffsets(trim($whitelistPhrase));
+            if ($cleanPhrase === '') {
+                continue;
+            }
+
+            $offset = 0;
+            while (($position = mb_stripos($maskedText, $cleanPhrase, $offset, 'UTF-8')) !== false) {
+                $length = strlen(mb_substr($maskedText, 0, $position, 'UTF-8'));
+                $phraseBytes = strlen(mb_substr($maskedText, $position, mb_strlen($cleanPhrase, 'UTF-8'), 'UTF-8'));
+                $maskedText = substr_replace($maskedText, str_repeat(' ', $phraseBytes), $length, $phraseBytes);
+                $offset = $position + mb_strlen($cleanPhrase, 'UTF-8');
+            }
+        }
+
+        foreach ($badWordsData as $item) {
+            $word = is_array($item) ? ($item['word'] ?? '') : (string) $item;
+            $severityStr = is_array($item) ? ($item['severity'] ?? 'medium') : 'medium';
+            $cleanWord = trim(strtolower($word));
+
+            if (empty($cleanWord)) {
+                continue;
+            }
+
+            $pattern = $this->buildRegexPattern($cleanWord);
+
+            if (preg_match_all($pattern, $maskedText, $matches, PREG_OFFSET_CAPTURE)) {
+                $detectedWords[] = $cleanWord;
+                $currentMatchCount = count($matches[0]);
+                $matchCount += $currentMatchCount;
+
+                // Hitung severity score
+                $severityScore = match (strtolower($severityStr)) {
+                    'high'   => 3,
+                    'low'    => 1,
+                    default  => 2,
+                };
+                if ($severityScore > $highestSeverityScore) {
+                    $highestSeverityScore = $severityScore;
+                }
+
+                foreach ($matches[0] as [$matchedString, $normalizedOffset]) {
+                    $normalizedEnd = $normalizedOffset + strlen($matchedString) - 1;
+                    if (!isset($originalStartByByte[$normalizedOffset], $originalEndByByte[$normalizedEnd])) {
+                        continue;
+                    }
+                    $matchedOriginalRanges[] = [
+                        $originalStartByByte[$normalizedOffset],
+                        $originalEndByByte[$normalizedEnd],
+                    ];
+                }
+            }
+        }
+
+        $matchedOriginalRanges = array_values(array_unique($matchedOriginalRanges, SORT_REGULAR));
+        usort($matchedOriginalRanges, fn ($a, $b) => $b[0] <=> $a[0]);
+        foreach ($matchedOriginalRanges as [$start, $end]) {
+            $matchedOriginal = substr($censoredText, $start, $end - $start);
+            $stars = str_repeat('*', max(4, mb_strlen($matchedOriginal, 'UTF-8')));
+            $censoredText = substr_replace($censoredText, $stars, $start, $end - $start);
+        }
+
+        $detectedWords = array_values(array_unique($detectedWords));
+        $isDetected = !empty($detectedWords);
+
+        // Hitung tingkat keparahan akhir
+        $finalSeverity = 'none';
+        if ($isDetected) {
+            if ($highestSeverityScore >= 3 || $matchCount >= 3) {
+                $finalSeverity = 'high';
+            } elseif ($highestSeverityScore === 2 || $matchCount === 2) {
+                $finalSeverity = 'medium';
+            } else {
+                $finalSeverity = 'low';
+            }
+        }
+
+        return [
+            'detected'      => $isDetected,
+            'words'         => $detectedWords,
+            'severity'      => $finalSeverity,
+            'censored_text' => $censoredText,
+            'match_count'   => $matchCount,
+        ];
+    }
+
+    /**
+     * Normalisasi teks secara wajar tanpa menyebabkan false positive agresif.
+     */
+    public function normalizeText(string $text): string
+    {
+        $normalized = preg_replace('/\s+/', ' ', $this->normalizeCharacter($text));
+        return trim($normalized ?? '');
+    }
+
+    private function normalizeCharacter(string $text): string
+    {
+        $normalized = mb_strtolower($text);
+
+        // Substitusi karakter leetspeak standar yang umum
+        $replacements = [
+            '@' => 'a',
+            '4' => 'a',
+            '0' => 'o',
+            '1' => 'i',
+            '!' => 'i',
+            '3' => 'e',
+            '$' => 's',
+            '5' => 's',
+            '7' => 't',
+        ];
+
+        // Lakukan substitusi hanya ketika dikelilingi huruf atau pemisah
+        $normalized = strtr($normalized, $replacements);
+
+        return $normalized;
+    }
+
+    /**
+     * Normalize per Unicode character while retaining byte offsets into the original text.
+     * The moderation pattern accepts separators, so whitespace does not need collapsing.
+     *
+     * @return array{string, array<int, int>, array<int, int>}
+     */
+    private function normalizeWithOffsets(string $text): array
+    {
+        $characters = preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $normalized = '';
+        $startByByte = [];
+        $endByByte = [];
+        $originalOffset = 0;
+
+        foreach ($characters as $character) {
+            $characterBytes = strlen($character);
+            $normalizedCharacter = $this->normalizeCharacter($character);
+            $normalizedBytes = strlen($normalizedCharacter);
+            $normalized .= $normalizedCharacter;
+            for ($i = 0; $i < $normalizedBytes; $i++) {
+                $startByByte[] = $originalOffset;
+                $endByByte[] = $originalOffset + $characterBytes;
+            }
+            $originalOffset += $characterBytes;
+        }
+
+        return [$normalized, $startByByte, $endByByte];
+    }
+
+    /**
+     * Ambil kata-kata kasar aktif dari Cache.
+     *
+     * @return array<array{word: string, severity: string, language: string}>
+     */
+    public function getActiveBadWords(): array
+    {
+        return Cache::remember(self::CACHE_BAD_WORDS_KEY, self::CACHE_TTL, function () {
+            try {
+                if (Schema::hasTable('bad_words')) {
+                    return BadWord::where('is_active', true)
+                        ->get(['word', 'severity', 'language'])
+                        ->toArray();
+                }
+            } catch (\Throwable $e) {
+                // Fallback jika DB error
+            }
+
+            $defaultWords = config('moderation.bad_words', [
+                'anjing', 'babi', 'bangsat', 'kontol', 'memek',
+                'goblok', 'tolol', 'kampret', 'asu', 'bajingan'
+            ]);
+
+            return array_map(fn($w) => ['word' => $w, 'severity' => 'medium', 'language' => 'indonesian'], $defaultWords);
+        });
+    }
+
+    /**
+     * Ambil daftar whitelist aktif dari Cache.
+     *
+     * @return array<string>
+     */
+    public function getActiveWhitelists(): array
+    {
+        return Cache::remember(self::CACHE_WHITELISTS_KEY, self::CACHE_TTL, function () {
+            try {
+                if (Schema::hasTable('whitelists')) {
+                    return Whitelist::where('is_active', true)
+                        ->pluck('phrase')
+                        ->toArray();
+                }
+            } catch (\Throwable $e) {
+                // Fallback
+            }
+
+            return [];
+        });
+    }
+
+    /**
+     * Bersihkan cache moderasi ketika ada perubahan badword atau whitelist.
+     */
+    public function clearCache(): void
+    {
+        Cache::forget(self::CACHE_BAD_WORDS_KEY);
+        Cache::forget(self::CACHE_WHITELISTS_KEY);
+    }
+
+    /**
+     * Membangun regex pattern yang menangani variasi penulisan tanpa merusak kata normal.
+     */
+    protected function buildRegexPattern(string $word): string
+    {
+        $chars = preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY);
+        $escapedChars = array_map(function ($char) {
+            return preg_quote($char, '/');
+        }, $chars);
+
+        // Gabungkan tiap karakter dengan opsi pemisah opsional (spasi, strip, titik)
+        $charPattern = implode('[\s\.\-_]*', $escapedChars);
+
+        // Boundary agar tidak mencocokkan di dalam kata lain yang valid
+        return '/(?<![a-zA-Z0-9])' . $charPattern . '(?![a-zA-Z0-9])/iu';
+    }
+}
