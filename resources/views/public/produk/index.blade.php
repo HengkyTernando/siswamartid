@@ -52,10 +52,10 @@
                             <span class="text-xs font-extrabold text-[var(--color-text-muted)] uppercase tracking-wider hidden sm:inline">Urutkan:</span>
                             <select name="sort" onchange="this.form.submit()"
                                     class="pl-4 pr-9 py-2.5 text-xs font-black uppercase tracking-wider border-2 border-[var(--color-border)] bg-white rounded-full shadow-solid-sm focus:outline-none focus:ring-0 appearance-none cursor-pointer hover:-translate-y-0.5 transition-transform">
-                                <option value="terbaru" {{ ($sort ?? '') == 'terbaru' ? 'selected' : '' }}>✨ Terbaru</option>
-                                <option value="terpopuler" {{ ($sort ?? '') == 'terpopuler' ? 'selected' : '' }}>🔥 Terpopuler</option>
-                                <option value="termurah" {{ ($sort ?? '') == 'termurah' ? 'selected' : '' }}>🏷️ Termurah</option>
-                                <option value="termahal" {{ ($sort ?? '') == 'termahal' ? 'selected' : '' }}>💎 Termahal</option>
+                                <option value="terbaru" {{ ($sort ?? '') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
+                                <option value="terpopuler" {{ ($sort ?? '') == 'terpopuler' ? 'selected' : '' }}>Terpopuler</option>
+                                <option value="termurah" {{ ($sort ?? '') == 'termurah' ? 'selected' : '' }}>Termurah</option>
+                                <option value="termahal" {{ ($sort ?? '') == 'termahal' ? 'selected' : '' }}>Termahal</option>
                             </select>
                         </div>
                     </form>
@@ -75,22 +75,23 @@
             <div class="mt-6 pt-6 border-t-2 border-dashed border-[var(--color-border)]/20 flex items-center gap-3 overflow-x-auto scrollbar-hide">
                 <a href="{{ route('public.produk.index', array_filter(['q' => $search, 'sort' => $sort ?? null])) }}"
                    class="cat-chip {{ !$selectedKategori ? 'bg-[var(--color-primary)] text-white shadow-solid-sm -translate-y-0.5' : 'bg-white text-[var(--color-text)] shadow-sm hover:shadow-solid-sm hover:-translate-y-0.5' }} flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold border-2 border-[var(--color-border)] transition-all whitespace-nowrap uppercase tracking-wider">
-                    <span>🛍️</span> Semua
+                    <x-public.home-icon name="package" class="h-4 w-4" aria-hidden="true" /> Semua
                 </a>
                 @foreach($kategoriList as $kat)
                     @php
                         $isActive = $selectedKategori === $kat->slug;
                         $catIcons = [
-                            'makanan' => '🍜',
-                            'minuman' => '🧋',
-                            'snack'   => '🍿',
-                            'dessert' => '🍰',
+                            'makanan' => 'burger',
+                            'makanan-berat' => 'burger',
+                            'minuman' => 'glass-full',
+                            'snack'   => 'cookie',
+                            'dessert' => 'cake',
                         ];
-                        $icon = $catIcons[$kat->slug] ?? '🏷️';
+                        $icon = $catIcons[$kat->slug] ?? 'package';
                     @endphp
                     <a href="{{ route('public.produk.index', array_filter(['kategori' => $kat->slug, 'q' => $search, 'sort' => $sort ?? null])) }}"
                        class="cat-chip {{ $isActive ? 'bg-[var(--color-primary)] text-white shadow-solid-sm -translate-y-0.5' : 'bg-white text-[var(--color-text)] shadow-sm hover:shadow-solid-sm hover:-translate-y-0.5' }} flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold border-2 border-[var(--color-border)] transition-all whitespace-nowrap uppercase tracking-wider">
-                        <span>{{ $icon }}</span> {{ $kat->nama }}
+                        <x-public.home-icon :name="$icon" class="h-4 w-4" aria-hidden="true" /> {{ $kat->nama }}
                         @if($kat->produk_count > 0)
                             <span class="px-2 py-0.5 rounded-full text-[10px] {{ $isActive ? 'bg-white/20 text-white' : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]' }}">
                                 {{ $kat->produk_count }}
@@ -108,9 +109,9 @@
 {{-- Results Grid --}}
 <main class="max-w-[1400px] mx-auto px-6 lg:px-[60px] pb-20 bg-[var(--color-bg)] min-h-[50vh]">
     @if($produk->isEmpty())
-        <div class="bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-[32px] p-12 sm:p-16 text-center max-w-2xl mx-auto shadow-solid-sm">
+        <div class="empty-state max-w-2xl">
             <div class="text-7xl mb-4">
-                🍜
+                <x-public.home-icon name="package" :size="72" aria-hidden="true" />
             </div>
             <h3 class="text-2xl sm:text-3xl font-black text-[var(--color-text)] mb-3 uppercase tracking-tight">Produk tidak ditemukan</h3>
             <p class="text-sm sm:text-base font-bold text-[var(--color-text-muted)] mb-8">
@@ -122,11 +123,11 @@
             </p>
             <a href="{{ route('public.produk.index') }}"
                class="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-sm font-black tracking-wider uppercase bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)]">
-                🔄 ATUR ULANG PENCARIAN
+                ATUR ULANG PENCARIAN
             </a>
         </div>
     @else
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+        <div class="product-card-grid grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             @foreach($produk as $item)
                 <x-public.product-card :produk="$item" />
             @endforeach
@@ -139,3 +140,4 @@
 </main>
 
 @endsection
+

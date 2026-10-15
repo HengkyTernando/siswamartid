@@ -7,18 +7,49 @@
 /* ─── Design Tokens ────────────────────────────────────────────── */
 @layer base {
     :root {
-        --color-primary:       #FF7A00;
-        --color-primary-dark:  #E66A00;
-        --color-primary-light: #FFF8E8;
-        --color-primary-border:#FFD84D;
-        --color-bg:            #FFF8E8;
-        --color-surface:       #FFFCF5;
-        --color-text:          #241A14;
-        --color-text-muted:    #64748B;
-        --color-border:        #241A14;
-        --color-success:       #5B8C51;
-        --color-warning:       #FFD84D;
-        --color-danger:        #DC2626;
+        --ink: #3A2417;
+        --ink-soft: #6B4E3D;
+        --cream: #FFF6E5;
+        --cream-2: #FFEBCB;
+        --white-warm: #FFFBF4;
+        --brand: #FF7A00;
+        --brand-ink: #B34A00;
+        --brand-display: #E36A00;
+        --lavender: #E3D9FB;
+        --peach: #F8C9B0;
+        --mint: #B9E6D9;
+        --butter: #FFE79F;
+        --green: #4E7344;
+        --accent-purple: #8B6BD0;
+        --accent-teal: #2F7F6F;
+        --accent-gold: #B8860B;
+        --success-bg: #BFE8C8;
+        --warning-bg: #FFD54A;
+        --border-w: 2.5px;
+        --border: var(--border-w) solid var(--ink);
+        --r-card: 28px;
+        --r-tile: 28px;
+        --r-block: 36px;
+        --r-input: 18px;
+        --r-pill: 999px;
+        --shadow: 4px 4px 0 var(--ink);
+        --shadow-hover: 6px 6px 0 var(--ink);
+        --shadow-active: 2px 2px 0 var(--ink);
+        --container: 1200px;
+        --gutter: clamp(16px, 4vw, 24px);
+        --section-gap: clamp(40px, 6vw, 80px);
+        --color-primary: var(--brand);
+        --color-primary-dark: var(--brand-ink);
+        --color-primary-light: var(--cream-2);
+        --color-primary-border: var(--butter);
+        --color-bg: var(--cream);
+        --color-surface: var(--white-warm);
+        --color-text: var(--ink);
+        --color-text-muted: var(--ink-soft);
+        --color-border: var(--ink);
+        --color-success: var(--green);
+        --color-warning: var(--warning-bg);
+        --color-danger: #9C3329;
     }
 
     html {
@@ -107,7 +138,7 @@
     .cat-chip.active {
         background-color: var(--color-primary);
         color: var(--color-border);
-        box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
+        box-shadow: inset 2px 2px 0 var(--ink);
         transform: translate(2px, 2px);
     }
     .cat-chip:not(.active):hover {

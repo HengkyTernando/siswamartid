@@ -17,33 +17,29 @@
             <div class="absolute right-0 top-16 w-32 h-32 bg-[var(--color-warning)] border-4 border-[var(--color-border)] rounded-full shadow-solid-md rotate-12 hidden md:block"></div>
             <div class="absolute w-16 h-16 bg-[#A3D9C9] border-4 border-[var(--color-border)] rounded-full shadow-solid-sm -rotate-12 hidden md:block" style="right: 6rem; bottom: 2.5rem;"></div>
 
-            <div class="relative z-10 max-w-4xl">
-                <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-5">
-                    Tentang <span class="text-[var(--color-primary)]">Kami</span>
-                </h1>
-                <p class="text-lg md:text-xl font-bold text-[var(--color-text-muted)] leading-relaxed max-w-3xl">
-                    SiswaMart adalah katalog digital yang membantu makanan dan minuman buatan siswa lebih mudah ditemukan di lingkungan sekolah.
-                </p>
-            </div>
+            <x-public.page-header class="relative z-10 max-w-4xl">
+                <x-slot:title>Tentang <span class="text-[var(--brand)]">Kami</span></x-slot:title>
+                <x-slot:description>SiswaMart adalah katalog digital yang membantu makanan dan minuman buatan siswa lebih mudah ditemukan di lingkungan sekolah.</x-slot:description>
+            </x-public.page-header>
         </section>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 pb-16 items-stretch">
+        <section class="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8 pb-16 items-stretch">
             <div class="min-w-0">
-                <div class="h-full bg-[var(--color-primary)] border-4 border-[var(--color-border)] rounded-[40px] p-6 md:p-7 relative z-10 shadow-solid-lg transform -rotate-1 hover:-translate-y-2 transition-transform duration-300">
-                    <span class="text-5xl block mb-4" aria-hidden="true">01</span>
-                    <h2 class="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-[0.95] mb-4">Mengapa SiswaMart Dibuat?</h2>
-                    <p class="text-base font-bold leading-relaxed">
+                <div class="h-full bg-[var(--color-primary)] border-4 border-[var(--color-border)] rounded-[40px] p-4 sm:p-6 md:p-7 relative z-10 shadow-solid-lg transform -rotate-1 hover:-translate-y-2 transition-transform duration-300">
+                    <span class="text-3xl sm:text-5xl block mb-3 sm:mb-4" aria-hidden="true">01</span>
+                    <h2 class="text-lg sm:text-3xl md:text-4xl font-black uppercase tracking-tighter leading-[0.95] mb-3 sm:mb-4">Mengapa SiswaMart Dibuat?</h2>
+                    <p class="text-sm sm:text-base font-bold leading-relaxed">
                         Promosi produk kuliner siswa masih sering dilakukan secara konvensional: menawarkan dari kelas ke kelas, mengandalkan pesan berantai WhatsApp, atau memasang pengumuman fisik. Cara ini membuat jangkauan promosi menjadi terbatas dan informasi produk tidak terpusat.
                     </p>
                 </div>
             </div>
 
             <div class="min-w-0">
-                <div class="h-full bg-white border-4 border-[var(--color-border)] rounded-[40px] p-6 md:p-7 relative z-10 shadow-solid-md transform rotate-1 hover:-translate-y-2 transition-transform duration-300">
-                    <span class="text-5xl block mb-4 text-[var(--color-success)]" aria-hidden="true">02</span>
-                    <h2 class="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-[0.95] mb-4">Solusi Kami</h2>
-                    <p class="text-base font-bold text-[var(--color-text-muted)] leading-relaxed">
-                        SiswaMart hadir sebagai katalog dan platform promosi kuliner siswa yang terpusat. Pengunjung dapat menemukan dan melihat produk dalam satu tempat. SiswaMart tidak menyediakan checkout langsung; komunikasi pemesanan dilakukan melalui WhatsApp dengan penjual.
+                <div class="h-full bg-white border-4 border-[var(--color-border)] rounded-[40px] p-4 sm:p-6 md:p-7 relative z-10 shadow-solid-md transform rotate-1 hover:-translate-y-2 transition-transform duration-300">
+                    <span class="text-3xl sm:text-5xl block mb-3 sm:mb-4 text-[var(--color-success)]" aria-hidden="true">02</span>
+                    <h2 class="text-lg sm:text-3xl md:text-4xl font-black uppercase tracking-tighter leading-[0.95] mb-3 sm:mb-4">Solusi Kami</h2>
+                    <p class="text-sm sm:text-base font-bold text-[var(--color-text-muted)] leading-relaxed">
+                        SiswaMart hadir sebagai katalog dan platform promosi kuliner siswa yang terpusat. Pengunjung dapat menemukan dan melihat produk dalam satu tempat. SiswaMart tidak menyediakan checkout langsung, komunikasi pemesanan dilakukan melalui WhatsApp dengan penjual.
                     </p>
                 </div>
             </div>
@@ -58,22 +54,22 @@
                 <p class="text-base font-bold text-[var(--color-text-muted)] max-w-md">Satu katalog untuk mempertemukan produk, pembeli, dan komunitas sekolah.</p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
-                <div class="h-full bg-[#FFB084] border-4 border-[var(--color-border)] rounded-[40px] p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
-                    <h3 class="text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-3">Siswa Penjual</h3>
-                    <p class="text-sm md:text-base font-bold leading-relaxed">Mendapat ruang promosi yang lebih terpusat untuk memperkenalkan produk kuliner kepada warga sekolah.</p>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 items-stretch">
+                <div class="h-full bg-[#FFB084] border-4 border-[var(--color-border)] rounded-[40px] p-4 sm:p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
+                    <h3 class="text-base sm:text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-2 sm:mb-3">Siswa Penjual</h3>
+                    <p class="text-xs sm:text-sm md:text-base font-bold leading-relaxed">Mendapat ruang promosi yang lebih terpusat untuk memperkenalkan produk kuliner kepada warga sekolah.</p>
                 </div>
-                <div class="h-full bg-[#A3D9C9] border-4 border-[var(--color-border)] rounded-[40px] p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
-                    <h3 class="text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-3">Pembeli</h3>
-                    <p class="text-sm md:text-base font-bold leading-relaxed">Lebih mudah menemukan pilihan makanan dan minuman karya siswa dalam satu katalog.</p>
+                <div class="h-full bg-[#A3D9C9] border-4 border-[var(--color-border)] rounded-[40px] p-4 sm:p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
+                    <h3 class="text-base sm:text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-2 sm:mb-3">Pembeli</h3>
+                    <p class="text-xs sm:text-sm md:text-base font-bold leading-relaxed">Lebih mudah menemukan pilihan makanan dan minuman karya siswa dalam satu katalog.</p>
                 </div>
-                <div class="h-full bg-[#D4C4FB] border-4 border-[var(--color-border)] rounded-[40px] p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
-                    <h3 class="text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-3">Guru</h3>
-                    <p class="text-sm md:text-base font-bold leading-relaxed">Dapat melihat aktivitas promosi produk siswa melalui platform yang lebih rapi dan terpusat.</p>
+                <div class="h-full bg-[#D4C4FB] border-4 border-[var(--color-border)] rounded-[40px] p-4 sm:p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
+                    <h3 class="text-base sm:text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-2 sm:mb-3">Guru</h3>
+                    <p class="text-xs sm:text-sm md:text-base font-bold leading-relaxed">Dapat melihat aktivitas promosi produk siswa melalui platform yang lebih rapi dan terpusat.</p>
                 </div>
-                <div class="h-full bg-[var(--color-warning)] border-4 border-[var(--color-border)] rounded-[40px] p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
-                    <h3 class="text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-3">Staf Sekolah</h3>
-                    <p class="text-sm md:text-base font-bold leading-relaxed">Memiliki media informasi bersama untuk mendukung ekosistem kuliner siswa di sekolah.</p>
+                <div class="h-full bg-[var(--color-warning)] border-4 border-[var(--color-border)] rounded-[40px] p-4 sm:p-6 shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
+                    <h3 class="text-base sm:text-xl md:text-2xl font-black uppercase tracking-tight leading-tight mb-2 sm:mb-3">Staf Sekolah</h3>
+                    <p class="text-xs sm:text-sm md:text-base font-bold leading-relaxed">Memiliki media informasi bersama untuk mendukung ekosistem kuliner siswa di sekolah.</p>
                 </div>
             </div>
         </section>
@@ -81,3 +77,4 @@
 </main>
 
 @endsection
+

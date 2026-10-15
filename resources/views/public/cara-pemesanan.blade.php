@@ -22,58 +22,58 @@
             <div class="absolute -top-10 -left-10 w-24 h-24 bg-[#FFD84D] border-4 border-[var(--color-border)] rounded-full shadow-solid-sm z-0 hidden md:block transform -rotate-12"></div>
             <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-[#A3D9C9] border-4 border-[var(--color-border)] rounded-full shadow-solid-sm z-0 hidden md:block transform rotate-12"></div>
             
-            <h1 class="text-6xl lg:text-7xl font-black text-[var(--color-text)] mb-6 uppercase tracking-tighter relative z-10">Gimana Cara Menghubungi Penjual?</h1>
-            <p class="text-[var(--color-text-muted)] text-xl lg:text-2xl font-bold relative z-10 bg-white inline-block px-8 py-4 rounded-full border-4 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-border)] transform -rotate-1">
-                Lihat produk, baca ulasan, lalu lanjutkan komunikasi langsung. 👇
-            </p>
+            <x-public.page-header class="relative z-10">
+                <x-slot:title>Gimana Cara Menghubungi Penjual?</x-slot:title>
+                <x-slot:description>Lihat produk, baca ulasan, lalu lanjutkan komunikasi langsung.</x-slot:description>
+            </x-public.page-header>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 relative">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-10 relative">
             
             {{-- Step 1 --}}
-            <div class="bg-[#FFF8E8] border-4 border-[var(--color-border)] p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
-                <div class="absolute -top-6 -right-6 w-14 h-14 bg-white border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-2xl text-[var(--color-text)] shadow-solid-sm transform rotate-12">1</div>
-                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-4 border-[var(--color-border)] transform -rotate-6">
-                    🔎
+            <div class="bg-[#FFF8E8] border-4 border-[var(--color-border)] p-4 sm:p-6 lg:p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
+                <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 bg-white border-2 sm:border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-lg sm:text-2xl text-[var(--color-text)] shadow-solid-sm transform rotate-12">1</div>
+                <div class="w-14 h-14 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mb-4 sm:mb-6 lg:mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-2 sm:border-4 border-[var(--color-border)] transform -rotate-6">
+                    <x-public.home-icon name="search" :size="40" aria-hidden="true" />
                 </div>
-                <h3 class="text-2xl font-black text-[var(--color-text)] mb-4 uppercase tracking-tighter">Temukan Produk</h3>
-                <p class="text-[var(--color-text-muted)] text-base font-bold leading-relaxed">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-black text-[var(--color-text)] mb-2 sm:mb-4 uppercase tracking-tighter">Temukan Produk</h3>
+                <p class="text-xs sm:text-sm lg:text-base text-[var(--color-text-muted)] font-bold leading-relaxed">
                     Jelajahi produk yang dipromosikan oleh siswa SMKN 11.
                 </p>
             </div>
 
             {{-- Step 2 --}}
-            <div class="bg-[#D4C4FB] border-4 border-[var(--color-border)] p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300 lg:translate-y-8">
-                <div class="absolute -top-6 -right-6 w-14 h-14 bg-white border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-2xl text-[var(--color-text)] shadow-solid-sm transform -rotate-12">2</div>
-                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-4 border-[var(--color-border)] transform rotate-6">
-                    👀
+            <div class="bg-[#D4C4FB] border-4 border-[var(--color-border)] p-4 sm:p-6 lg:p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300 lg:translate-y-8">
+                <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 bg-white border-2 sm:border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-lg sm:text-2xl text-[var(--color-text)] shadow-solid-sm transform -rotate-12">2</div>
+                <div class="w-14 h-14 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mb-4 sm:mb-6 lg:mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-2 sm:border-4 border-[var(--color-border)] transform rotate-6">
+                    <x-public.home-icon name="star" :size="40" aria-hidden="true" />
                 </div>
-                <h3 class="text-2xl font-black text-[var(--color-text)] mb-4 uppercase tracking-tighter">Lihat Detail & Ulasan</h3>
-                <p class="text-[var(--color-text-muted)] text-base font-bold leading-relaxed">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-black text-[var(--color-text)] mb-2 sm:mb-4 uppercase tracking-tighter">Lihat Detail & Ulasan</h3>
+                <p class="text-xs sm:text-sm lg:text-base text-[var(--color-text-muted)] font-bold leading-relaxed">
                     Baca deskripsi, harga, status produk, dan komentar pengunjung.
                 </p>
             </div>
 
             {{-- Step 3 --}}
-            <div class="bg-[#FFB084] border-4 border-[var(--color-border)] p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
-                <div class="absolute -top-6 -right-6 w-14 h-14 bg-white border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-2xl text-[var(--color-text)] shadow-solid-sm transform rotate-12">3</div>
-                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-4 border-[var(--color-border)] transform -rotate-6">
-                    💬
+            <div class="bg-[#FFB084] border-4 border-[var(--color-border)] p-4 sm:p-6 lg:p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300">
+                <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 bg-white border-2 sm:border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-lg sm:text-2xl text-[var(--color-text)] shadow-solid-sm transform rotate-12">3</div>
+                <div class="w-14 h-14 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mb-4 sm:mb-6 lg:mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-2 sm:border-4 border-[var(--color-border)] transform -rotate-6">
+                    <x-public.home-icon name="brand-whatsapp" :size="40" aria-hidden="true" />
                 </div>
-                <h3 class="text-2xl font-black text-[var(--color-text)] mb-4 uppercase tracking-tighter">Chat Penjual</h3>
-                <p class="text-white text-base font-bold leading-relaxed drop-shadow-md">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-black text-[var(--color-text)] mb-2 sm:mb-4 uppercase tracking-tighter">Chat Penjual</h3>
+                <p class="text-white text-xs sm:text-sm lg:text-base font-bold leading-relaxed drop-shadow-md">
                     Gunakan tombol WhatsApp pada halaman detail produk.
                 </p>
             </div>
 
             {{-- Step 4 --}}
-            <div class="bg-[#A3D9C9] border-4 border-[var(--color-border)] p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300 lg:translate-y-8">
-                <div class="absolute -top-6 -right-6 w-14 h-14 bg-white border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-2xl text-[var(--color-text)] shadow-solid-sm transform -rotate-12">4</div>
-                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center text-5xl mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-4 border-[var(--color-border)] transform rotate-6">
-                    🤝
+            <div class="bg-[#A3D9C9] border-4 border-[var(--color-border)] p-4 sm:p-6 lg:p-8 rounded-[40px] relative z-10 text-center shadow-solid-md transform hover:-translate-y-2 transition-transform duration-300 lg:translate-y-8">
+                <div class="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 bg-white border-2 sm:border-4 border-[var(--color-border)] rounded-full flex items-center justify-center font-black text-lg sm:text-2xl text-[var(--color-text)] shadow-solid-sm transform -rotate-12">4</div>
+                <div class="w-14 h-14 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center mb-4 sm:mb-6 lg:mb-8 mx-auto shadow-[4px_4px_0px_0px_var(--color-border)] border-2 sm:border-4 border-[var(--color-border)] transform rotate-6">
+                    <x-public.home-icon name="circle-check" :size="40" aria-hidden="true" />
                 </div>
-                <h3 class="text-2xl font-black text-[var(--color-text)] mb-4 uppercase tracking-tighter">Atur Langsung</h3>
-                <p class="text-[var(--color-text-muted)] text-base font-bold leading-relaxed">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-black text-[var(--color-text)] mb-2 sm:mb-4 uppercase tracking-tighter">Atur Langsung</h3>
+                <p class="text-xs sm:text-sm lg:text-base text-[var(--color-text-muted)] font-bold leading-relaxed">
                     Tanyakan ketersediaan dan sepakati hal selanjutnya langsung dengan penjual. SiswaMart tidak memproses transaksi.
                 </p>
             </div>
@@ -103,3 +103,4 @@
 </main>
 
 @endsection
+

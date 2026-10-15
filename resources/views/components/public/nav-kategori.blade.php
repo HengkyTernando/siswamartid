@@ -39,21 +39,14 @@
 
         @forelse($navKategori as $item)
             @php
-                $catIcons = [
-                    'makanan' => 'food.svg',
-                    'minuman' => 'drink.svg',
-                    'snack' => 'snack.svg',
-                    'dessert' => 'dessert.svg',
-                ];
-                $iconFile = $catIcons[$item->slug] ?? 'bag.svg';
+                $catIcons = ['makanan' => 'burger', 'makanan-berat' => 'burger', 'minuman' => 'glass-full', 'snack' => 'cookie', 'dessert' => 'cake'];
+                $iconName = $catIcons[$item->slug] ?? 'package';
             @endphp
             <a href="{{ route('public.kategori.show', $item->slug) }}"
                @click="catOpen = false"
                class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#172033] hover:bg-[#EFF6FF] hover:text-[#2563EB] transition-colors"
                role="menuitem">
-                <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center">
-                    <img src="{{ asset('images/icons/' . $iconFile) }}" alt="{{ $item->nama }}" class="w-full h-full object-contain">
-                </div>
+                <x-public.home-icon :name="$iconName" class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                 <span>{{ $item->nama }}</span>
             </a>
         @empty
@@ -73,3 +66,4 @@
         </div>
     </div>
 </div>
+

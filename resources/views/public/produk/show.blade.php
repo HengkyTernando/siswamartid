@@ -86,6 +86,11 @@
                 class="lg:w-[45%] xl:w-[50%] bg-[#FFD84D] relative flex items-center justify-center min-h-[280px] sm:min-h-[360px] lg:min-h-[600px] p-5 sm:p-8 lg:p-12 border-b-2 lg:border-b-0 lg:border-r-4 border-[var(--color-border)]"
             >
 
+                @php
+                    $detailCategory = $produk->kategori->slug ?? '';
+                    $detailIcon = ['makanan' => 'burger', 'makanan-berat' => 'burger', 'minuman' => 'glass-full', 'snack' => 'cookie', 'dessert' => 'cake'][$detailCategory] ?? 'package';
+                    $detailTint = ['makanan' => 'var(--peach)', 'makanan-berat' => 'var(--peach)', 'minuman' => 'var(--mint)', 'snack' => 'var(--butter)', 'dessert' => 'var(--lavender)'][$detailCategory] ?? 'var(--cream-2)';
+                @endphp
                 @if($produk->foto_utama)
 
                     <img
@@ -93,46 +98,13 @@
                         alt="{{ $produk->nama }}"
                         class="max-w-full max-h-[340px] lg:max-h-[500px] object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500"
                         loading="eager"
+                        onerror="this.onerror=null;this.hidden=true;this.parentElement.querySelector('[data-detail-fallback]').hidden=false;"
                     >
-
-                @else
-
-                    <div
-                        class="w-64 h-64 bg-white rounded-full flex flex-col items-center justify-center gap-4 border-4 border-[var(--color-border)] shadow-solid-md"
-                    >
-
-                        @php
-                            $slug = $produk->kategori->slug ?? '';
-
-                            $catIcons = [
-                                'makanan' => 'food.svg',
-                                'minuman' => 'drink.svg',
-                                'snack' => 'snack.svg',
-                                'dessert' => 'dessert.svg',
-                            ];
-
-                            $iconFile = $catIcons[$slug] ?? 'bag.svg';
-                        @endphp
-
-                        <div class="w-20 h-20 opacity-50 grayscale">
-
-                            <img
-                                src="{{ asset('images/icons/' . $iconFile) }}"
-                                alt="Placeholder"
-                                class="w-full h-full object-contain"
-                            >
-
-                        </div>
-
-                        <span
-                            class="text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider"
-                        >
-                            Tanpa Foto
-                        </span>
-
-                    </div>
-
                 @endif
+                <div data-detail-fallback @if($produk->foto_utama) hidden @endif class="product-detail-fallback" style="--product-placeholder: {{ $detailTint }}" role="img" aria-label="Ilustrasi kategori {{ $produk->kategori->nama ?? 'produk' }}">
+                    <span class="product-detail-fallback__icon" aria-hidden="true"><x-public.home-icon :name="$detailIcon" :size="84" :stroke-width="1.5" /></span>
+                    <span class="text-sm font-bold text-[var(--ink-soft)]">{{ $produk->kategori->nama ?? 'Produk SiswaMart' }}</span>
+                </div>
 
 
                 {{-- Label promosi --}}
@@ -196,7 +168,7 @@
                     class="flex flex-wrap items-center gap-2 sm:gap-4 mb-6 sm:mb-10"
                 >
 
-                    @if($produk->stok === 'ready')
+                    @if($produk->stok === 'tersedia')
 
                         <span
                             class="inline-flex items-center gap-2 text-sm font-black text-[#16A34A] bg-[#BBF7D0] border-2 border-[#16A34A] shadow-[2px_2px_0px_0px_#16A34A] px-4 py-2 rounded-full uppercase tracking-wider"
@@ -245,7 +217,7 @@
                         >
 
                             <span class="text-yellow-400 text-lg leading-none">
-                                ★
+                                <x-public.home-icon name="star" :filled="true" :size="15" aria-hidden="true" />
                             </span>
 
                             <span
@@ -271,7 +243,8 @@
                         <span
                             class="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--color-text-muted)]"
                         >
-                            👁️ {{ number_format($produk->views, 0, ',', '.') }} views
+                            <x-public.click-icon class="h-4 w-4 shrink-0" />
+                            {{ number_format($produk->views, 0, ',', '.') }} views
                         </span>
 
                     @endif
@@ -340,7 +313,7 @@
                                 <div
                                     class="flex items-center gap-1 text-sm font-bold text-[var(--color-text-muted)] mt-1"
                                 >
-                                    📍 {{ $produk->penjual->lokasi_kelas }}
+                                    <x-public.home-icon name="map-pin" :size="16" aria-hidden="true" /> {{ $produk->penjual->lokasi_kelas }}
                                 </div>
 
                             @endif
@@ -392,7 +365,7 @@
                 <div
                     class="absolute -top-4 -right-3 sm:-top-6 sm:-right-6 w-12 h-12 sm:w-20 sm:h-20 bg-[#FFB084] border-2 sm:border-4 border-[var(--color-border)] rounded-full shadow-solid-sm z-0 hidden sm:flex items-center justify-center text-3xl transform rotate-12"
                 >
-                    ⭐
+                    <x-public.home-icon name="star" :filled="true" :size="18" aria-hidden="true" />
                 </div>
 
 
@@ -416,7 +389,7 @@
                     >
 
                         <span class="text-2xl flex-shrink-0">
-                            🎉
+                            <x-public.home-icon name="circle-check" :size="20" aria-hidden="true" />
                         </span>
 
                         <p class="text-sm sm:text-base font-black">
@@ -462,7 +435,7 @@
                             <div
                                 class="flex text-yellow-400 text-xl tracking-tighter"
                             >
-                                ★★★★★
+                                <span class="inline-flex items-center gap-1" aria-label="Rating 5 bintang"><x-public.home-icon name="star" :filled="true" :size="16" /><x-public.home-icon name="star" :filled="true" :size="16" /><x-public.home-icon name="star" :filled="true" :size="16" /><x-public.home-icon name="star" :filled="true" :size="16" /><x-public.home-icon name="star" :filled="true" :size="16" /></span>
                             </div>
 
                             <span
@@ -479,9 +452,9 @@
                     <button
                         type="button"
                         @click="$dispatch('open-review-modal')"
-                        class="btn-primary w-full py-3 text-sm bg-[var(--color-primary)] text-white"
+                        class="btn-primary product-review-trigger"
                     >
-                        ✍️ TULIS ULASAN
+                        <x-public.home-icon name="edit" :size="16" aria-hidden="true" /> TULIS ULASAN
                     </button>
 
                 </div>
@@ -495,7 +468,7 @@
                     >
 
                         <div class="text-4xl mb-3">
-                            💬
+                            <x-public.home-icon name="message-circle" :size="28" aria-hidden="true" />
                         </div>
 
                         <p
@@ -532,7 +505,7 @@
 
                                         @for($i = 1; $i <= 5; $i++)
 
-                                            {{ $i <= $rev->rating ? '★' : '☆' }}
+                                            <x-public.home-icon name="star" :filled="$i <= $rev->rating" :size="14" aria-hidden="true" />
 
                                         @endfor
 
@@ -583,7 +556,7 @@
                 <div
                     class="w-16 h-16 bg-white border-4 border-[var(--color-border)] rounded-full flex items-center justify-center text-3xl mb-6 shadow-[4px_4px_0px_0px_var(--color-border)] transform -rotate-12"
                 >
-                    💬
+                    <x-public.home-icon name="message-circle" :size="24" aria-hidden="true" />
                 </div>
 
                 <h2
@@ -634,7 +607,7 @@
 
 
             <div
-                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                class="product-card-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
 
                 @foreach($produkTerkait as $item)
@@ -683,7 +656,7 @@
         >
 
             <span aria-hidden="true">
-                💬
+                <x-public.home-icon name="message-circle" :size="24" aria-hidden="true" />
             </span>
 
         </a>
@@ -695,7 +668,7 @@
             title="Nomor WhatsApp penjual belum tersedia"
             aria-label="Nomor WhatsApp penjual belum tersedia"
         >
-            💬
+            <x-public.home-icon name="message-circle" :size="24" aria-hidden="true" />
         </div>
 
     @endif
@@ -817,7 +790,7 @@
                                 :style="'color:' + (i <= (hoverRating || rating) ? '#FACC15' : '#D1D5DB')"
                                 :aria-label="'Rating ' + i + ' bintang'"
                             >
-                                ★
+                                <x-public.home-icon name="star" :filled="true" :size="15" aria-hidden="true" />
                             </button>
 
                         </template>
@@ -959,3 +932,4 @@
 @endpush
 
 @endsection
+

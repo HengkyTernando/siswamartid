@@ -2,37 +2,193 @@
     Product Card — Public Catalog
     Storefront-style: foto dominan, typography bold, organic playful vibe.
 --}}
-@props(['produk'])
+@props(['produk', 'homepage' => false])
+
+@if($homepage)
+    @php
+        $categorySlug = $produk->kategori->slug ?? '';
+        $categoryIcons = [
+            'makanan' => 'burger',
+            'makanan-berat' => 'burger',
+            'minuman' => 'glass-full',
+            'snack' => 'cookie',
+            'dessert' => 'cake',
+        ];
+        $categoryColors = [
+            'makanan' => 'var(--peach)',
+            'makanan-berat' => 'var(--peach)',
+            'minuman' => 'var(--mint)',
+            'snack' => 'var(--butter)',
+            'dessert' => 'var(--lavender)',
+        ];
+        $categoryIcon = $categoryIcons[$categorySlug] ?? 'burger';
+        $categoryColor = $categoryColors[$categorySlug] ?? 'var(--cream)';
+        $homeAverageRating = $produk->ulasan_avg_rating ?? $produk->average_rating ?? 0;
+        $homeBadges = [];
+        if ($produk->stok === 'po') {
+            $homeBadges[] = ['label' => 'PRE-ORDER', 'class' => 'home-product-card__badge--preorder'];
+        } elseif ($produk->stok === 'tersedia') {
+            $homeBadges[] = ['label' => 'TERSEDIA', 'class' => 'home-product-card__badge--available'];
+        } elseif ($produk->stok === 'habis') {
+            $homeBadges[] = ['label' => 'HABIS', 'class' => 'home-product-card__badge--unavailable'];
+        }
+
+        $promotionLabel = trim((string) $produk->label_promosi);
+        $stockLabel = $homeBadges[0]['label'] ?? null;
+        $normalizedPromotionLabel = strtoupper(str_replace([' ', '-'], '', $promotionLabel));
+        $normalizedStockLabel = strtoupper(str_replace([' ', '-'], '', (string) $stockLabel));
+        if ($promotionLabel !== '' && $normalizedPromotionLabel !== $normalizedStockLabel && count($homeBadges) < 2) {
+            $promotionClass = in_array(strtoupper($promotionLabel), ['BEST SELLER', 'TERLARIS', 'HITS', 'FAVORIT'], true)
+                ? 'home-product-card__badge--favorite'
+                : 'home-product-card__badge--promo';
+            $homeBadges[] = ['label' => $promotionLabel, 'class' => $promotionClass];
+        }
+    @endphp
+
+    <a href="{{ route('public.produk.show', $produk->slug) }}"
+       id="produk-card-{{ $produk->id }}"
+       class="product-card home-product-card group"
+       aria-label="Lihat detail {{ $produk->nama }}">
+        <div class="home-product-card__media">
+            @if($produk->foto_utama)
+                <img src="{{ asset('storage/' . $produk->foto_utama) }}"
+                     alt="{{ $produk->nama }}"
+                     width="640"
+                     height="480"
+                     loading="lazy"
+                     onerror="this.onerror=null;this.hidden=true;this.parentElement.querySelector('[data-product-fallback]').hidden=false;">
+                <div data-product-fallback hidden class="home-product-card__fallback" style="--product-placeholder: {{ $categoryColor }}" role="img" aria-label="Ilustrasi kategori {{ $produk->kategori->nama ?? 'produk' }}">
+                    <span class="home-product-card__fallback-icon" aria-hidden="true" style="--icon-fill: {{ $categoryColor }}"><x-public.home-icon :name="$categoryIcon" :size="60" :stroke-width="1.5" /></span>
+                </div>
+            @else
+                <div data-product-fallback class="home-product-card__fallback" style="--product-placeholder: {{ $categoryColor }}" role="img" aria-label="Ilustrasi kategori {{ $produk->kategori->nama ?? 'produk' }}">
+                    <span class="home-product-card__fallback-icon" aria-hidden="true" style="--icon-fill: {{ $categoryColor }}"><x-public.home-icon :name="$categoryIcon" :size="60" :stroke-width="1.5" /></span>
+                </div>
+            @endif
+
+            @if($homeBadges)
+                <div class="home-product-card__badges" aria-label="Status produk">
+                    @foreach(array_slice($homeBadges, 0, 2) as $badge)
+                        <span class="home-product-card__badge {{ $badge['class'] }}">{{ $badge['label'] }}</span>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        <div class="home-product-card__info">
+            <h3 class="home-product-card__title">{{ $produk->nama }}</h3>
+            <p class="home-product-card__seller">
+                <x-public.home-icon name="building-store" class="home-product-card__seller-icon" aria-hidden="true" />
+                <span>{{ $produk->penjual->nama_toko ?? 'Penjual' }}</span>
+            </p>
+
+            @if($produk->kategori)
+                <span class="home-product-card__category">{{ $produk->kategori->nama }}</span>
+            @endif
+
+            <div class="home-product-card__meta">
+                <span class="home-product-card__price">Rp {{ number_format($produk->harga, 0, ',', '.') }}</span>
+                <div class="home-product-card__stats">
+                    @if((float) $homeAverageRating > 0)
+                        <span class="home-product-card__rating" aria-label="Rating {{ number_format($homeAverageRating, 1) }} dari 5">
+                            <x-public.home-icon name="star" class="home-product-card__rating-icon" :filled="true" aria-hidden="true" />
+                            {{ number_format($homeAverageRating, 1) }}
+                        </span>
+                    @endif
+                    <span class="home-product-card__views" aria-label="{{ number_format($produk->views ?? 0, 0, ',', '.') }} kali dilihat">
+                        <x-public.home-icon name="eye" class="home-product-card__views-icon" aria-hidden="true" />
+                        {{ number_format($produk->views ?? 0, 0, ',', '.') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </a>
+@else
+
+@once
+    <style>
+        .product-card-grid,
+        .category-product-grid {
+            grid-auto-rows: 27.5rem;
+        }
+
+        .product-card-grid > .product-card,
+        .category-product-grid > .product-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .product-card-grid .product-card__media,
+        .category-product-grid .product-card__media {
+            width: 100%;
+            flex: 0 0 52%;
+            aspect-ratio: auto;
+            border-right: 0;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .product-card-grid .product-card__info,
+        .category-product-grid .product-card__info {
+            flex: 1;
+            min-height: 0;
+        }
+
+        @media (min-width: 1024px) {
+            .category-product-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 767px) {
+            .product-card-grid,
+            .category-product-grid {
+                grid-auto-rows: 12.25rem;
+            }
+
+            .product-card-grid > .product-card,
+            .category-product-grid > .product-card {
+                flex-direction: row;
+            }
+
+            .product-card-grid .product-card__media,
+            .category-product-grid .product-card__media {
+                width: 8rem;
+                flex: 0 0 8rem;
+                height: 100%;
+                aspect-ratio: 1;
+                border-right: 2px solid var(--color-border);
+                border-bottom: 0;
+            }
+        }
+    </style>
+@endonce
 
 <a href="{{ route('public.produk.show', $produk->slug) }}"
    id="produk-card-{{ $produk->id }}"
-   class="product-card group flex flex-col h-full focus:outline-none bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-solid-sm hover:shadow-solid-md hover:-translate-y-1 transition-all duration-200 rounded-[24px] overflow-hidden"
+   class="product-card group flex h-full min-h-36 flex-row focus:outline-none bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-solid-sm hover:shadow-solid-md hover:-translate-y-1 transition-all duration-200 rounded-[24px] overflow-hidden md:flex-col"
    aria-label="Lihat detail {{ $produk->nama }}">
 
     {{-- ── Foto Produk ──────────────────────────────────────── --}}
-    <div class="relative w-full aspect-square overflow-hidden bg-white border-b-2 border-[var(--color-border)]">
+    @php
+        $slug = $produk->kategori->slug ?? '';
+        $fallbackIcons = ['makanan' => 'burger', 'makanan-berat' => 'burger', 'minuman' => 'glass-full', 'snack' => 'cookie', 'dessert' => 'cake'];
+        $fallbackTints = ['makanan' => 'var(--peach)', 'makanan-berat' => 'var(--peach)', 'minuman' => 'var(--mint)', 'snack' => 'var(--butter)', 'dessert' => 'var(--lavender)'];
+        $fallbackIcon = $fallbackIcons[$slug] ?? 'package';
+        $fallbackTint = $fallbackTints[$slug] ?? 'var(--cream-2)';
+    @endphp
+    <div class="product-card__media relative aspect-square w-32 shrink-0 overflow-hidden bg-white border-r-2 border-[var(--color-border)] md:w-full md:border-r-0 md:border-b-2">
         @if($produk->foto_utama)
             <img src="{{ asset('storage/' . $produk->foto_utama) }}"
                  alt="{{ $produk->nama }}"
                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
-                 loading="lazy">
-        @else
-            <div class="img-placeholder w-full h-full gap-3 bg-[var(--color-bg)] flex flex-col items-center justify-center">
-                @php
-                    $slug  = $produk->kategori->slug ?? '';
-                    $catIcons = [
-                        'makanan' => 'food.svg',
-                        'minuman' => 'drink.svg',
-                        'snack' => 'snack.svg',
-                        'dessert' => 'dessert.svg',
-                    ];
-                    $iconFile = $catIcons[$slug] ?? 'bag.svg';
-                @endphp
-                <div class="w-16 h-16 opacity-40 grayscale">
-                    <img src="{{ asset('images/icons/' . $iconFile) }}" alt="Placeholder" class="w-full h-full object-contain">
-                </div>
-            </div>
+                 loading="lazy"
+                 onerror="this.onerror=null;this.hidden=true;this.parentElement.querySelector('[data-product-fallback]').hidden=false;">
         @endif
+        <div data-product-fallback @if($produk->foto_utama) hidden @endif class="product-card__fallback img-placeholder w-full h-full flex items-center justify-center" style="--product-placeholder: {{ $fallbackTint }}" role="img" aria-label="Ilustrasi kategori {{ $produk->kategori->nama ?? 'produk' }}">
+            <span class="product-card__fallback-icon" aria-hidden="true"><x-public.home-icon :name="$fallbackIcon" :size="60" :stroke-width="1.5" /></span>
+        </div>
 
         {{-- Status / Promo Badges (Top Left) --}}
         <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
@@ -63,7 +219,7 @@
                     {{ $badge['text'] }}
                 </span>
             @endif
-            @if($produk->stok === 'ready')
+            @if($produk->stok === 'tersedia')
                 <span class="inline-block bg-[#BBF7D0] text-[#166534] border border-[#16A34A] text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Tersedia</span>
             @endif
         </div>
@@ -71,7 +227,7 @@
     </div>
 
     {{-- ── Info Produk ───────────────────────────────────────── --}}
-    <div class="p-4 sm:p-5 flex flex-col flex-1 justify-between bg-[var(--color-surface)]">
+    <div class="product-card__info flex min-w-0 flex-1 flex-col justify-between bg-[var(--color-surface)] p-3 sm:p-5">
         <div>
             {{-- Nama Produk --}}
             <h3 class="text-base sm:text-lg font-black text-[var(--color-text)] leading-snug line-clamp-2 mb-1.5 group-hover:text-[var(--color-primary)] transition-colors duration-150">
@@ -102,7 +258,7 @@
                     Rp {{ number_format($produk->harga, 0, ',', '.') }}
                 </span>
 
-                {{-- Rating / Views Badge --}}
+                {{-- Rating and views --}}
                 <div class="flex items-center gap-1 shrink-0">
                     @php
                         $avgRating = $produk->ulasan_avg_rating ?? $produk->average_rating ?? 0;
@@ -115,17 +271,16 @@
                             </svg>
                             <span>{{ number_format($avgRating, 1) }}</span>
                         </div>
-                    @else
-                        <div class="flex items-center gap-1 text-[11px] font-bold text-[var(--color-text-muted)] bg-[var(--color-bg)] px-2 py-0.5 rounded-full border border-[var(--color-border)]/10">
-                            <svg class="w-3 h-3 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            <span>{{ number_format($produk->views, 0, ',', '.') }}</span>
-                        </div>
                     @endif
+
+                    <div class="flex items-center gap-0.5 text-[11px] font-bold text-[var(--color-text-muted)]">
+                        <x-public.click-icon class="h-3.5 w-3.5 shrink-0" />
+                        <span>{{ number_format($produk->views, 0, ',', '.') }}</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </a>
+@endif
+

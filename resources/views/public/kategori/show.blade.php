@@ -95,12 +95,7 @@
                 <p class="text-lg font-bold text-[var(--color-text-muted)]">Temukan {{ strtolower($kategori->nama) }} favorit buatan teman-temanmu.</p>
             </div>
             
-            <div class="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
-                <div class="bg-white border-2 border-[var(--color-border)] px-4 py-2 rounded-full font-bold shadow-solid-sm text-sm">
-                    {{ $produk->total() }} PRODUK
-                </div>
-
-                <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="hidden lg:flex items-center gap-3 w-full lg:w-auto">
                     <span class="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">URUTKAN</span>
                     <select x-model="sort" @change="submitForm()"
                             class="w-full sm:w-auto pl-4 pr-10 py-3 text-sm font-bold uppercase tracking-wider border-2 border-[var(--color-border)] bg-white rounded-xl shadow-solid-sm focus:outline-none focus:ring-0 appearance-none cursor-pointer hover:-translate-y-0.5 transition-transform">
@@ -109,7 +104,6 @@
                         <option value="termurah">Termurah</option>
                         <option value="termahal">Termahal</option>
                     </select>
-                </div>
             </div>
         </div>
 
@@ -117,56 +111,12 @@
 
             {{-- ─── Sidebar (Desktop) ──────────────────────── --}}
             <aside class="w-full lg:w-[320px] flex-shrink-0">
-                <div class="sticky top-24 space-y-8">
+                <div class="space-y-8 lg:sticky lg:top-24">
                     
-                    {{-- Card Kategori --}}
-                    <div class="bg-[var(--color-surface)] rounded-3xl border-2 border-[var(--color-border)] shadow-solid-md p-6">
-                        <h2 class="text-xl font-black text-[var(--color-text)] mb-6 uppercase tracking-wider">Kategori</h2>
-                        <ul class="space-y-3">
-                            <li>
-                                <a href="{{ route('public.kategori.index') }}"
-                                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold text-[var(--color-text)] bg-white border-2 border-[var(--color-border)] shadow-sm hover:shadow-solid-sm hover:-translate-y-1 transition-all group">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center p-1.5 flex-shrink-0 border-2 border-[var(--color-border)]">
-                                            <img src="{{ asset('images/icons/bag.svg') }}" alt="Semua Kategori" class="w-full h-full object-contain">
-                                        </div>
-                                        <span class="uppercase tracking-wider">Semua Kategori</span>
-                                    </div>
-                                    <span class="text-xs bg-[var(--color-bg)] px-2 py-1 rounded-full border-2 border-[var(--color-border)]">{{ $totalSemua }}</span>
-                                </a>
-                            </li>
-                            @foreach($kategoriList as $kat)
-                                @if($kat->produk_count > 0)
-                                    @php
-                                        $catData = [
-                                            'makanan' => ['icon'=>'food.svg', 'bg'=>'bg-[#FFB084]', 'hover'=>'hover:bg-[#FFB084]'],
-                                            'minuman' => ['icon'=>'drink.svg', 'bg'=>'bg-[#A3D9C9]', 'hover'=>'hover:bg-[#A3D9C9]'],
-                                            'snack' => ['icon'=>'snack.svg', 'bg'=>'bg-[#FFD84D]', 'hover'=>'hover:bg-[#FFD84D]'],
-                                            'dessert' => ['icon'=>'dessert.svg', 'bg'=>'bg-[#D4C4FB]', 'hover'=>'hover:bg-[#D4C4FB]'],
-                                        ];
-                                        $data = $catData[$kat->slug] ?? ['icon'=>'bag.svg', 'bg'=>'bg-[#FFF8E8]', 'hover'=>'hover:bg-[#FFF8E8]'];
-                                        $isActive = $kat->id === $kategori->id;
-                                    @endphp
-                                    <li>
-                                        <a href="{{ route('public.kategori.show', $kat->slug) }}"
-                                           class="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all group 
-                                           {{ $isActive ? 'bg-[var(--color-primary)] text-white border-2 border-[var(--color-border)] shadow-solid-sm' : 'text-[var(--color-text)] bg-white border-2 border-[var(--color-border)] shadow-sm hover:shadow-solid-sm hover:-translate-y-1 ' . $data['hover'] }}">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 {{ $isActive ? 'bg-white' : $data['bg'] }} rounded-full flex items-center justify-center p-1.5 flex-shrink-0 border-2 border-[var(--color-border)]">
-                                                    <img src="{{ asset('images/icons/' . $data['icon']) }}" alt="{{ $kat->nama }}" class="w-full h-full object-contain">
-                                                </div>
-                                                <span class="uppercase tracking-wider">{{ $kat->nama }}</span>
-                                            </div>
-                                            <span class="text-xs {{ $isActive ? 'bg-white text-[var(--color-text)]' : 'bg-[var(--color-bg)] text-[var(--color-text)]' }} px-2 py-1 rounded-full border-2 border-[var(--color-border)]">{{ $kat->produk_count }}</span>
-                                        </a>
-                                    </li>
-                                @endif
-                            @endforeach
-                        </ul>
-                    </div>
+                    <x-public.category-select :kategori-list="$kategoriList" :selected-kategori="$kategori" />
 
                     {{-- Card Filter Harga --}}
-                    <div class="bg-[var(--color-surface)] rounded-3xl border-2 border-[var(--color-border)] shadow-solid-md p-6">
+                    <div class="hidden lg:block bg-[var(--color-surface)] rounded-3xl border-2 border-[var(--color-border)] shadow-solid-md p-6">
                         <h2 class="text-xl font-black text-[var(--color-text)] mb-6 uppercase tracking-wider">Atur Harga</h2>
                         
                         {{-- Range visualization --}}
@@ -218,9 +168,9 @@
                 
                 {{-- Product Grid --}}
                 @if($produk->isEmpty())
-                    <div class="bg-[var(--color-surface)] border-2 border-dashed border-[var(--color-border)] rounded-[40px] p-12 lg:p-20 text-center">
+                    <div class="empty-state">
                         <div class="text-[80px] mb-6 grayscale opacity-40">
-                            🕵️
+                            <x-public.home-icon name="package" :size="72" aria-hidden="true" />
                         </div>
                         <h3 class="text-3xl font-black text-[var(--color-text)] mb-4 uppercase">Kosong Melompong!</h3>
                         <p class="text-lg font-bold text-[var(--color-text-muted)] mb-8 max-w-md mx-auto">
@@ -235,7 +185,7 @@
                         </a>
                     </div>
                 @else
-                    <div class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div class="category-product-grid grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
                         @foreach($produk as $item)
                             <x-public.product-card :produk="$item" />
                         @endforeach
@@ -253,3 +203,4 @@
 </div>
 
 @endsection
+
