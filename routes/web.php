@@ -28,7 +28,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::post('/notifikasi/baca-semua', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllRead'])->name('notifications.read_all');
     Route::get('/notifikasi/poll', [\App\Http\Controllers\Admin\NotificationController::class, 'poll'])->name('notifications.poll');
-    Route::get('/notifikasi/{notification}/baca', [\App\Http\Controllers\Admin\NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifikasi/{notification}/baca', [\App\Http\Controllers\Admin\NotificationController::class, 'markRead'])->name('notifications.read');
+
+    // Laporan Agregat Admin
+    Route::get('/laporan', [\App\Http\Controllers\Admin\LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/produk', [\App\Http\Controllers\Admin\LaporanController::class, 'produk'])->name('laporan.produk');
+    Route::get('/laporan/ulasan', [\App\Http\Controllers\Admin\LaporanController::class, 'ulasan'])->name('laporan.ulasan');
+    Route::get('/laporan/penjual/pdf', [\App\Http\Controllers\Admin\LaporanController::class, 'penjualPdf'])->name('laporan.penjual.pdf');
+    Route::get('/laporan/ulasan/pdf', [\App\Http\Controllers\Admin\LaporanController::class, 'ulasanPdf'])->name('laporan.ulasan.pdf');
+    Route::get('/laporan/pdf', [\App\Http\Controllers\Admin\LaporanController::class, 'pdf'])->name('laporan.pdf');
 
     // Manajemen Penjual
     Route::resource('penjual', \App\Http\Controllers\Admin\PenjualController::class)
@@ -47,34 +55,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Kelola Komentar & Auto Moderasi
     Route::get('komentar', [\App\Http\Controllers\Admin\KomentarController::class, 'index'])->name('komentar.index');
-    Route::patch('komentar/{ulasan}', [\App\Http\Controllers\Admin\KomentarController::class, 'update'])->name('komentar.update');
-    Route::patch('komentar/{ulasan}/approve', [\App\Http\Controllers\Admin\KomentarController::class, 'approve'])->name('komentar.approve');
-    Route::patch('komentar/{ulasan}/censor', [\App\Http\Controllers\Admin\KomentarController::class, 'censor'])->name('komentar.censor');
-    Route::patch('komentar/{ulasan}/reject', [\App\Http\Controllers\Admin\KomentarController::class, 'reject'])->name('komentar.reject');
-    Route::patch('komentar/{ulasan}/hide', [\App\Http\Controllers\Admin\KomentarController::class, 'hide'])->name('komentar.hide');
     Route::delete('komentar/{ulasan}', [\App\Http\Controllers\Admin\KomentarController::class, 'destroy'])->name('komentar.destroy');
-
-    // Filter Kata (Bad Words)
-    Route::post('komentar/bad-words', [\App\Http\Controllers\Admin\KomentarController::class, 'storeBadWord'])->name('komentar.badWords.store');
-    Route::patch('komentar/bad-words/{badWord}', [\App\Http\Controllers\Admin\KomentarController::class, 'updateBadWord'])->name('komentar.badWords.update');
-    Route::patch('komentar/bad-words/{badWord}/toggle', [\App\Http\Controllers\Admin\KomentarController::class, 'toggleBadWord'])->name('komentar.badWords.toggle');
-    Route::delete('komentar/bad-words/{badWord}', [\App\Http\Controllers\Admin\KomentarController::class, 'destroyBadWord'])->name('komentar.badWords.destroy');
-
-    // Whitelist Words/Phrases
-    Route::post('komentar/whitelists', [\App\Http\Controllers\Admin\KomentarController::class, 'storeWhitelist'])->name('komentar.whitelists.store');
-    Route::patch('komentar/whitelists/{whitelist}/toggle', [\App\Http\Controllers\Admin\KomentarController::class, 'toggleWhitelist'])->name('komentar.whitelists.toggle');
-    Route::delete('komentar/whitelists/{whitelist}', [\App\Http\Controllers\Admin\KomentarController::class, 'destroyWhitelist'])->name('komentar.whitelists.destroy');
 
     // Alias untuk ulasan.index
     Route::get('ulasan', [\App\Http\Controllers\Admin\KomentarController::class, 'index'])->name('ulasan.index');
-    Route::patch('ulasan/{ulasan}/approve', [\App\Http\Controllers\Admin\KomentarController::class, 'approve'])->name('ulasan.approve');
-    Route::patch('ulasan/{ulasan}/reject', [\App\Http\Controllers\Admin\KomentarController::class, 'reject'])->name('ulasan.reject');
 });
 
 // ─── Penjual Area ─────────────────────────────────────────────────────────────
 Route::prefix('penjual')->name('penjual.')->middleware(['auth', 'penjual'])->group(function () {
     Route::get('/dashboard', [PenjualDashboardController::class, 'index'])->name('dashboard');
+    Route::patch('/status-toko', [PenjualDashboardController::class, 'toggleStatusToko'])->name('status_toko.toggle');
     Route::get('/laporan', [\App\Http\Controllers\Penjual\LaporanController::class, 'index'])->name('laporan');
+    Route::get('/laporan/pdf', [\App\Http\Controllers\Penjual\LaporanController::class, 'pdf'])->name('laporan.pdf');
 
     // Manajemen Produk
     Route::resource('produk', \App\Http\Controllers\Penjual\ProdukController::class)

@@ -10,14 +10,36 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'username', 'email', 'google_id', 'password', 'role', 'is_active', 'must_change_password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            if (filled($user->username)) {
+                return;
+            }
+
+            $identity = Str::before((string) ($user->email ?: $user->name), '@');
+            $base = Str::limit(Str::slug($identity, '_') ?: 'user', 70, '');
+            $username = $base;
+            $suffix = 1;
+
+            while (static::query()->where('username', $username)->exists()) {
+                $tail = '_'.$suffix++;
+                $username = Str::limit($base, 80 - strlen($tail), '').$tail;
+            }
+
+            $user->username = $username;
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -28,8 +50,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 

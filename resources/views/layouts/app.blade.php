@@ -13,8 +13,10 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <link rel="stylesheet" href="{{ asset('css/siswamart-theme.css') }}">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
     </head>
-    <body class="font-sans antialiased">
+    <body class="account-page font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
@@ -32,5 +34,11 @@
                 {{ $slot }}
             </main>
         </div>
+        <footer class="auth-site-footer">
+            <span>© {{ now()->year }} SiswaMart · Produk karya siswa SMKN 11 Bandung</span>
+            <a href="https://wa.me/6285724494193" target="_blank" rel="noopener noreferrer">Hubungi SiswaMart · WhatsApp</a>
+        </footer>
+        <x-back-floating />
     </body>
 </html>
+

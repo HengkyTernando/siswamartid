@@ -56,40 +56,65 @@
                 </div>
             </div>
             
-            {{-- Form Moderasi --}}
+            {{-- Review seller request or legacy status moderation --}}
             <div class="admin-card">
-                <div class="admin-card-header bg-[#e8f0fe] border-b-[#1a73e8]/20">
-                    <h3 class="text-sm font-bold text-[#1a73e8]">Keputusan Produk</h3>
+                <div class="admin-card-header bg-[var(--cream-2)]">
+                    <h3 class="text-sm font-bold text-[var(--text-main)]">Keputusan Produk</h3>
                 </div>
                 <div class="p-6">
-                    <form action="{{ route('admin.produk.updateStatus', $produk) }}" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        
-                        <div class="mb-5">
-                            <label class="block text-sm font-medium text-[var(--text-main)] mb-1.5">Pilih Status</label>
-                            <select name="status" class="form-input" required>
-                                <option value="pending" {{ $produk->status == 'pending' ? 'selected' : '' }}>Pending (Menunggu)</option>
-                                <option value="aktif" {{ $produk->status == 'aktif' ? 'selected' : '' }}>Aktif (Setujui & Tampilkan)</option>
-                                <option value="ditolak" {{ $produk->status == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
-                            </select>
+                    @if($produk->pending_action)
+                        <div class="mb-5 rounded-2xl border-2 border-[var(--ink)] bg-[var(--warning-bg)] p-4">
+                            <p class="font-bold text-[var(--ink)]">
+                                @if($produk->pending_action === 'create') Pengajuan produk baru
+                                @elseif($produk->pending_action === 'update') Permintaan perubahan produk
+                                @else Permintaan penghapusan produk @endif
+                            </p>
+                            @if($produk->pending_action === 'update')
+                                <dl class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                                    <div><dt class="font-bold">Nama</dt><dd>{{ $pendingChanges['nama'] ?? $produk->nama }}</dd></div>
+                                    <div><dt class="font-bold">Harga</dt><dd>Rp {{ number_format($pendingChanges['harga'] ?? $produk->harga, 0, ',', '.') }}</dd></div>
+                                    <div><dt class="font-bold">Stok</dt><dd>{{ ($pendingChanges['stok'] ?? $produk->stok) === 'po' ? 'Pre-Order' : ucfirst($pendingChanges['stok'] ?? $produk->stok) }}</dd></div>
+                                    <div><dt class="font-bold">Kategori</dt><dd>{{ $pendingCategory?->nama ?? $produk->kategori->nama }}</dd></div>
+                                    <div class="sm:col-span-2"><dt class="font-bold">Deskripsi</dt><dd class="whitespace-pre-wrap">{{ $pendingChanges['deskripsi'] ?? $produk->deskripsi }}</dd></div>
+                                </dl>
+                                @if(!empty($pendingChanges['foto_utama']))
+                                    <img src="{{ asset('storage/' . $pendingChanges['foto_utama']) }}" alt="Foto usulan produk" class="mt-3 h-40 w-40 rounded-2xl border-2 border-[var(--ink)] object-cover">
+                                @endif
+                            @endif
                         </div>
-                        
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-[var(--text-main)] mb-1.5">Catatan untuk Penjual</label>
-                            <textarea name="alasan_ditolak" rows="3" class="form-input" placeholder="Wajib diisi jika produk ditolak...">{{ old('alasan_ditolak', $produk->alasan_ditolak) }}</textarea>
-                            <p class="text-xs text-[var(--text-muted)] mt-1">Tambahkan catatan jika produk perlu diperbaiki.</p>
-                            @error('alasan_ditolak')
-                                <p class="text-[#ea4335] text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        
-                        <div class="flex gap-3">
-                            <button type="submit" class="btn-primary">
-                                Simpan Status
-                            </button>
-                        </div>
-                    </form>
+                        <form action="{{ route('admin.produk.updateStatus', $produk) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <div class="mb-5">
+                                <label class="mb-1.5 block text-sm font-medium text-[var(--text-main)]">Catatan untuk penjual</label>
+                                <textarea name="alasan_ditolak" rows="3" class="form-input" placeholder="Isi jika pengajuan ditolak atau perlu diperbaiki...">{{ old('alasan_ditolak') }}</textarea>
+                                @error('alasan_ditolak') <p class="mt-1 text-xs text-[#ea4335]">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <button type="submit" name="decision" value="approve" class="btn-primary">{{ $produk->pending_action === 'delete' ? 'Setujui & Hapus' : 'Setujui Pengajuan' }}</button>
+                                <button type="submit" name="decision" value="reject" class="btn-outline">Tolak Pengajuan</button>
+                            </div>
+                        </form>
+                    @else
+                        <form action="{{ route('admin.produk.updateStatus', $produk) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <div class="mb-5">
+                                <label class="mb-1.5 block text-sm font-medium text-[var(--text-main)]">Pilih Status</label>
+                                <select name="status" class="form-input" required>
+                                    <option value="pending" {{ $produk->status == 'pending' ? 'selected' : '' }}>Pending (Menunggu)</option>
+                                    <option value="aktif" {{ $produk->status == 'aktif' ? 'selected' : '' }}>Aktif (Setujui & Tampilkan)</option>
+                                    <option value="ditolak" {{ $produk->status == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                                </select>
+                            </div>
+                            <div class="mb-6">
+                                <label class="mb-1.5 block text-sm font-medium text-[var(--text-main)]">Catatan untuk Penjual</label>
+                                <textarea name="alasan_ditolak" rows="3" class="form-input" placeholder="Tambahkan catatan jika produk perlu diperbaiki...">{{ old('alasan_ditolak', $produk->alasan_ditolak) }}</textarea>
+                                @error('alasan_ditolak') <p class="mt-1 text-xs text-[#ea4335]">{{ $message }}</p> @enderror
+                            </div>
+                            <button type="submit" class="btn-primary">Simpan Status</button>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>

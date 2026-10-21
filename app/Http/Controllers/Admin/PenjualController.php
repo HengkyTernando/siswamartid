@@ -158,6 +158,18 @@ class PenjualController extends Controller
         abort_unless($penjual->role === 'penjual', 404);
         $penjual->load('penjual');
 
+        if ($penjual->penjual) {
+            $penjual->penjual->loadCount([
+                'produk',
+                'produk as produk_aktif_count' => fn ($query) => $query->where('status', 'aktif'),
+                'produk as produk_pending_count' => fn ($query) => $query->where(function ($pending) {
+                    $pending->where('status', 'pending')->orWhereNotNull('pending_action');
+                }),
+                'produk as produk_ditolak_count' => fn ($query) => $query->where('status', 'ditolak'),
+            ]);
+            $penjual->penjual->loadSum('produk', 'views');
+        }
+
         return view('admin.penjual.show', compact('penjual'));
     }
 
@@ -186,6 +198,12 @@ class PenjualController extends Controller
     public function destroy(User $penjual): RedirectResponse
     {
         abort_unless($penjual->role === 'penjual', 404);
+
+        if ($penjual->penjual && $penjual->penjual->produk()->exists()) {
+            return redirect()
+                ->route('admin.penjual.index')
+                ->with('error', 'Penjual tidak dapat dihapus karena masih memiliki produk di katalog. Silakan nonaktifkan akun sebagai gantinya.');
+        }
 
         $penjual->delete();
 

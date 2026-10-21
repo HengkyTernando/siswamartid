@@ -1,2 +1,11 @@
-*
-!.gitignore
+# Ignore SQLite databases and temporary files
+*.sqlite
+*.sqlite-journal
+
+# Ensure migrations, seeders, and factories are tracked
+!migrations/
+!migrations/*.php
+!seeders/
+!seeders/*.php
+!factories/
+!factories/*.php

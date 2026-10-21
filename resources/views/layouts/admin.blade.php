@@ -6,6 +6,7 @@
     <title>@yield('title', 'Admin') | SiswaMart</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -185,7 +186,7 @@
             left: 24px;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            box-shadow: 4px 4px 0 var(--ink);
             padding: 12px 20px;
             border-radius: 8px;
             display: flex;
@@ -215,8 +216,9 @@
         .badge-pending { background: #fef7e0; color: #b06000; }
         .badge-ditolak { background: #fce8e6; color: #c5221f; }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/siswamart-theme.css') }}">
 </head>
-<body class="flex min-h-screen">
+<body class="admin-dashboard flex min-h-screen">
 
     {{-- ── Sidebar ── --}}
     <aside class="app-sidebar hidden lg:flex">
@@ -250,6 +252,10 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                 Kelola Komentar
             </a>
+            <a href="{{ route('admin.laporan.index') }}" class="sidebar-link {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                Rekap Admin
+            </a>
         </nav>
 
         {{-- User info --}}
@@ -259,8 +265,8 @@
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-sm font-bold text-gray-900 truncate">{{ Auth::user()->name }}</p>
-                    <p class="text-gray-500 font-semibold text-xs capitalize">Admin SiswaMart</p>
+                    <p class="text-sm font-bold text-[var(--ink)] truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-[var(--ink-soft)] font-semibold text-xs capitalize">Admin SiswaMart</p>
                 </div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
@@ -307,7 +313,9 @@
                             <div id="adminNotificationList" class="max-h-96 overflow-y-auto">
                                 @forelse($adminNotifications as $notification)
                                     @php($notificationData = $notification->data)
-                                    <a href="{{ route('admin.notifications.read', $notification->id) }}" class="block px-4 py-3 border-b border-[var(--border-color)]/20 hover:bg-[var(--bg-hover)] transition-colors {{ $notification->read_at ? '' : 'bg-[#FFF3E0]' }}">
+                                    <form method="POST" action="{{ route('admin.notifications.read', $notification->id) }}" class="border-b border-[var(--border-color)]/20">
+                                        @csrf
+                                        <button type="submit" class="block w-full px-4 py-3 text-left hover:bg-[var(--bg-hover)] transition-colors {{ $notification->read_at ? '' : 'bg-[#FFF3E0]' }}">
                                         <div class="flex items-start gap-3">
                                             <span class="mt-1 w-2 h-2 rounded-full flex-shrink-0 {{ $notification->read_at ? 'bg-transparent' : 'bg-[#ea4335]' }}"></span>
                                             <div class="min-w-0 flex-1">
@@ -316,7 +324,8 @@
                                                 <p class="text-[10px] text-[var(--text-muted)] mt-1">{{ $notification->created_at?->diffForHumans() }}</p>
                                             </div>
                                         </div>
-                                    </a>
+                                        </button>
+                                    </form>
                                 @empty
                                     <p class="px-4 py-8 text-center text-xs font-bold text-[var(--text-muted)]">Belum ada notifikasi.</p>
                                 @endforelse
@@ -362,6 +371,7 @@
         const notificationCount = document.getElementById('adminNotificationCount');
         const notificationUrl = @json(route('admin.notifications.poll'));
         const notificationReadUrl = @json(route('admin.notifications.read', ['notification' => '__ID__']));
+        const notificationCsrfToken = @json(csrf_token());
         const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
         const refreshAdminNotifications = async () => {
             try {
@@ -371,7 +381,7 @@
                 notificationCount.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
                 notificationCount.classList.toggle('hidden', data.unread_count < 1);
                 notificationList.innerHTML = data.notifications.length
-                    ? data.notifications.map((item) => `<a href="${notificationReadUrl.replace('__ID__', item.id)}" class="block px-4 py-3 border-b border-[var(--border-color)]/20 hover:bg-[var(--bg-hover)] ${item.read_at ? '' : 'bg-[#FFF3E0]'}"><div class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full flex-shrink-0 ${item.read_at ? 'bg-transparent' : 'bg-[#ea4335]'}"></span><div class="min-w-0 flex-1"><p class="text-xs font-black text-[var(--text-main)]">${escapeHtml(item.data.title || 'Aktivitas baru')}</p><p class="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">${escapeHtml(item.data.description || '')}</p><p class="text-[10px] text-[var(--text-muted)] mt-1">${escapeHtml(item.created_at || '')}</p></div></div></a>`).join('')
+                    ? data.notifications.map((item) => `<form method="POST" action="${notificationReadUrl.replace('__ID__', encodeURIComponent(item.id))}" class="border-b border-[var(--border-color)]/20"><input type="hidden" name="_token" value="${escapeHtml(notificationCsrfToken)}"><button type="submit" class="block w-full px-4 py-3 text-left hover:bg-[var(--bg-hover)] ${item.read_at ? '' : 'bg-[#FFF3E0]'}"><div class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full flex-shrink-0 ${item.read_at ? 'bg-transparent' : 'bg-[#ea4335]'}"></span><div class="min-w-0 flex-1"><p class="text-xs font-black text-[var(--text-main)]">${escapeHtml(item.data.title || 'Aktivitas baru')}</p><p class="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">${escapeHtml(item.data.description || '')}</p><p class="text-[10px] text-[var(--text-muted)] mt-1">${escapeHtml(item.created_at || '')}</p></div></div></button></form>`).join('')
                     : '<p class="px-4 py-8 text-center text-xs font-bold text-[var(--text-muted)]">Belum ada notifikasi.</p>';
             } catch (error) {
                 // Polling is best-effort; the persisted notification menu remains usable.
@@ -379,5 +389,10 @@
         };
         setInterval(refreshAdminNotifications, 10000);
     </script>
+@unless(request()->routeIs('admin.dashboard'))
+    <x-back-floating :fallback="route('admin.dashboard')" />
+@endunless
 </body>
 </html>
+
+

@@ -28,6 +28,7 @@ class Penjual extends Model
         'nomor_whatsapp',
         'lokasi_kelas',
         'foto_toko',
+        'status_toko',
         'nisn',
         'alamat',
         'last_login_at',

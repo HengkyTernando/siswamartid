@@ -7,7 +7,7 @@
 
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-[var(--text-main)]">Selamat datang, {{ Auth::user()->name }} 👋</h2>
+            <h2 class="text-2xl font-bold text-[var(--text-main)]">Selamat datang, {{ Auth::user()->name }}</h2>
             <p class="text-[var(--text-muted)] mt-1 text-sm">Kelola produk dan pantau performa tokomu.</p>
         </div>
         <a href="{{ route('penjual.produk.create') }}" class="btn-primary shadow-sm">
@@ -16,8 +16,19 @@
         </a>
     </div>
 
-    {{-- Stats Row --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <h3 class="font-display text-base font-bold text-[var(--text-main)]">Rekapitulasi toko</h3>
+            <p class="mt-1 text-xs text-[var(--text-muted)]">Ringkasan produk, kunjungan, dan ulasan yang tercatat.</p>
+        </div>
+        <a href="{{ route('penjual.laporan') }}" class="btn-outline inline-flex w-fit items-center gap-2 text-sm">
+            Lihat rekapitulasi lengkap
+            <x-public.home-icon name="arrow-right" size="16" aria-hidden="true" />
+        </a>
+    </div>
+
+    {{-- Store summary --}}
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {{-- Total Produk --}}
         <div class="stat-card flex flex-col items-center text-center p-4">
             <div class="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--bg-active)] text-[var(--text-active)] mb-2">
@@ -46,12 +57,21 @@
         </div>
 
         {{-- Total Dilihat --}}
-        <div class="stat-card flex flex-col items-center text-center p-4" style="background:#1a73e8; color:white; border:none;">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white/20 text-white mb-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        <div class="stat-card flex flex-col items-center text-center p-4">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--cream-2)] text-[var(--ink)] mb-2">
+                <x-public.home-icon name="eye" size="16" aria-hidden="true" />
             </div>
-            <p class="text-white/80 text-xs mb-1">Total Dilihat</p>
-            <p class="text-2xl font-display font-bold text-white">{{ number_format($totalViews) }}</p>
+            <p class="text-[var(--text-muted)] text-xs mb-1">Total Dilihat</p>
+            <p class="text-2xl font-display font-bold text-[var(--text-main)]">{{ number_format($totalViews) }}</p>
+        </div>
+
+        {{-- Total ulasan publik --}}
+        <div class="stat-card flex flex-col items-center text-center p-4">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-[#E9E1FA] text-[var(--ink)] mb-2">
+                <x-public.home-icon name="message-circle" size="16" aria-hidden="true" />
+            </div>
+            <p class="text-[var(--text-muted)] text-xs mb-1">Total Ulasan</p>
+            <p class="text-2xl font-display font-bold text-[var(--text-main)]">{{ number_format($totalUlasan) }}</p>
         </div>
     </div>
 
@@ -110,7 +130,7 @@
             <div class="admin-card text-center">
                 <div class="admin-card-header flex justify-center pb-4">
                     <h3 class="font-display font-semibold text-[var(--text-main)] text-sm">
-                        <span class="mr-1">🔥</span> Produk Terpopuler
+                        <span class="mr-1"><x-public.home-icon name="trend-up" size="18" class="inline-block align-[-3px]" aria-hidden="true" /></span> Produk Terpopuler
                     </h3>
                 </div>
                 <div>
@@ -122,7 +142,7 @@
                         </span>
                         <div class="w-full">
                             <p class="text-[var(--text-main)] text-sm font-medium">{{ $populer->nama }}</p>
-                            <p class="text-[var(--text-muted)] text-xs mt-1">{{ number_format($populer->views) }} dilihat</p>
+                            <p class="text-[var(--text-muted)] text-xs mt-1">{{ number_format($populer->views) }} dilihat · {{ number_format($populer->ulasan_count) }} ulasan</p>
                         </div>
                     </div>
                     @empty

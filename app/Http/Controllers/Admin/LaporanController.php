@@ -1,0 +1,281 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Penjual;
+use App\Models\Produk;
+use App\Models\ProdukViewLog;
+use App\Models\Ulasan;
+use App\Notifications\AdminActivityNotification;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\View\View;
+
+class LaporanController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $request->validate(['kategori' => ['nullable', 'in:penjual,ulasan']]);
+        $kategoriLaporan = $request->query('kategori', 'penjual');
+        $period = $this->selectedPeriod($request);
+        [$start, $end, $periodLabel] = $this->periodRange($period);
+
+        $sellerReport = null;
+        $reviewReport = null;
+
+        if ($kategoriLaporan === 'penjual') {
+            $sellerReport = $this->sellerPerformance($start, $end);
+        } else {
+            $reviewReport = $this->reviewPerformance($start, $end);
+        }
+
+        return view('admin.laporan.index', compact(
+            'kategoriLaporan', 'period', 'periodLabel', 'start', 'end', 'sellerReport', 'reviewReport'
+        ));
+    }
+
+    /** Keep existing report URLs working while opening the consolidated report page. */
+    public function produk(Request $request)
+    {
+        return redirect()->route('admin.laporan.index', [
+            'kategori' => 'penjual',
+            'period' => $request->query('period', 'weekly'),
+        ]);
+    }
+
+    /**
+     * Laporan Agregat Ulasan SiswaMart.
+     */
+    public function ulasan(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        return redirect()->route('admin.laporan.index', [
+            'kategori' => 'ulasan',
+            'period' => $request->query('period', 'weekly'),
+        ]);
+    }
+
+    public function ulasanPdf(Request $request): Response
+    {
+        $period = $this->selectedPeriod($request);
+        [$start, $end, $periodLabel] = $this->periodRange($period);
+        $reviews = Ulasan::with(['produk.penjual'])
+            ->publicVisible()
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('created_at')
+            ->get();
+        $averageRating = round((float) $reviews->avg('rating'), 2);
+        $ratingDistribution = [];
+        for ($stars = 5; $stars >= 1; $stars--) {
+            $ratingDistribution[$stars] = $reviews->where('rating', $stars)->count();
+        }
+
+        $filename = 'rekap-ulasan-' . $period . '-' . $start->format('Ymd') . '.pdf';
+
+        return Pdf::loadView('admin.laporan.ulasan-pdf', compact(
+            'periodLabel', 'start', 'end', 'reviews', 'averageRating', 'ratingDistribution'
+        ))->setPaper('a4', 'landscape')->download($filename);
+    }
+
+    public function penjualPdf(Request $request): Response
+    {
+        $period = $this->selectedPeriod($request);
+        [$start, $end, $periodLabel] = $this->periodRange($period);
+        $sellerReport = $this->sellerPerformance($start, $end);
+
+        $filename = 'rekap-kinerja-penjual-' . $period . '-' . $start->format('Ymd') . '.pdf';
+
+        return Pdf::loadView('admin.laporan.penjual-pdf', compact(
+            'period', 'periodLabel', 'start', 'end', 'sellerReport'
+        ))->setPaper('a4', 'landscape')->download($filename);
+    }
+
+    public function pdf(Request $request): Response
+    {
+        $kategori = $request->query('kategori', 'penjual');
+        if ($kategori === 'ulasan') {
+            return $this->ulasanPdf($request);
+        }
+
+        return $this->penjualPdf($request);
+    }
+
+    private function selectedPeriod(Request $request): string
+    {
+        $request->validate(['period' => ['nullable', 'in:weekly,monthly']]);
+
+        return $request->query('period', 'weekly');
+    }
+
+    private function sellerPerformance(Carbon $start, Carbon $end): array
+    {
+        $events = $this->sellerProductEvents($start, $end);
+        $eventCounts = [];
+        foreach ($events as $event) {
+            $eventCounts[$event['seller_id']][$event['activity']] = ($eventCounts[$event['seller_id']][$event['activity']] ?? 0) + 1;
+        }
+
+        $periodViews = ProdukViewLog::query()
+            ->join('produk', 'produk.id', '=', 'produk_views_logs.produk_id')
+            ->whereBetween('produk_views_logs.created_at', [$start, $end])
+            ->select('produk.penjual_id')
+            ->selectRaw("SUM(CASE WHEN produk_views_logs.type = 'view' THEN 1 ELSE 0 END) AS view_count")
+            ->groupBy('produk.penjual_id')
+            ->get()
+            ->keyBy('penjual_id');
+
+        $periodReviews = Ulasan::query()
+            ->where(function ($query) {
+                $query->where(function ($approved) {
+                    $approved->where('ulasan.moderation_status', 'approved')
+                        ->whereNotIn('ulasan.status', ['disembunyikan', 'ditolak', 'dihapus', 'rejected']);
+                })->orWhere(function ($legacy) {
+                    $legacy->whereNull('ulasan.moderation_status')
+                        ->whereIn('ulasan.status', ['aktif', 'disetujui', 'disensor']);
+                });
+            })
+            ->join('produk', 'produk.id', '=', 'ulasan.produk_id')
+            ->whereBetween('ulasan.created_at', [$start, $end])
+            ->select('produk.penjual_id')
+            ->selectRaw('COUNT(ulasan.id) AS review_count')
+            ->selectRaw('AVG(ulasan.rating) AS average_rating')
+            ->groupBy('produk.penjual_id')
+            ->get()
+            ->keyBy('penjual_id');
+
+        $sellers = Penjual::with('user')
+            ->withCount('produk')
+            ->withCount(['produk as produk_aktif_count' => fn ($query) => $query->where('status', 'aktif')])
+            ->withSum('produk', 'views')
+            ->get()
+            ->map(function (Penjual $seller) use ($periodViews, $periodReviews, $eventCounts) {
+                $views = $periodViews->get($seller->id);
+                $reviews = $periodReviews->get($seller->id);
+                $seller->period_views = (int) ($views->view_count ?? 0);
+                $seller->period_reviews = (int) ($reviews->review_count ?? 0);
+                $seller->period_rating = $reviews?->average_rating !== null ? round((float) $reviews->average_rating, 1) : null;
+                $seller->period_added = $eventCounts[$seller->id]['produk.ditambahkan'] ?? 0;
+                $seller->period_deleted = $eventCounts[$seller->id]['produk.dihapus'] ?? 0;
+                $seller->period_edits_requested = $eventCounts[$seller->id]['produk.diedit'] ?? 0;
+
+                return $seller;
+            })
+            ->sortByDesc('period_views')
+            ->values();
+
+        $topProducts = Produk::with('penjual')
+            ->where('status', 'aktif')
+            ->withCount(['viewsLogs as period_views' => fn ($query) => $query->where('type', 'view')->whereBetween('created_at', [$start, $end])])
+            ->withCount(['ulasan as period_reviews' => fn ($query) => $query->publicVisible()->whereBetween('created_at', [$start, $end])])
+            ->orderByDesc('period_views')
+            ->orderByDesc('period_reviews')
+            ->limit(10)
+            ->get();
+
+        return [
+            'total_sellers' => $sellers->count(),
+            'products_added' => $events->where('activity', 'produk.ditambahkan')->count(),
+            'products_deleted' => $events->where('activity', 'produk.dihapus')->count(),
+            'edits_requested' => $events->where('activity', 'produk.diedit')->count(),
+            'views' => $sellers->sum('period_views'),
+            'reviews' => $sellers->sum('period_reviews'),
+            'sellers' => $sellers,
+            'top_products' => $topProducts,
+            'events' => $events->take(12),
+        ];
+    }
+
+    private function sellerProductEvents(Carbon $start, Carbon $end)
+    {
+        if (! Schema::hasTable('notifications')) {
+            return collect();
+        }
+
+        $sellerIdsByName = Penjual::with('user')->get()->mapWithKeys(function (Penjual $seller) {
+            return [mb_strtolower(trim($seller->user?->name ?? '')) => $seller->id];
+        });
+        $rows = DB::table('notifications')
+            ->where('type', AdminActivityNotification::class)
+            ->whereBetween('created_at', [$start, $end])
+            ->orderByDesc('created_at')
+            ->get(['data', 'created_at']);
+
+        $events = collect();
+        $seen = [];
+        foreach ($rows as $row) {
+            $data = json_decode($row->data, true) ?: [];
+            $activity = $data['activity'] ?? null;
+            $actor = trim($data['actor'] ?? '');
+            $sellerId = $sellerIdsByName->get(mb_strtolower($actor));
+
+            if (! in_array($activity, ['produk.ditambahkan', 'produk.dihapus', 'produk.diedit'], true) || ! $sellerId) {
+                continue;
+            }
+
+            $at = Carbon::parse($row->created_at);
+            $dedupeKey = implode('|', [$activity, $sellerId, $data['entity_id'] ?? '', $at->format('Y-m-d H:i')]);
+            if (isset($seen[$dedupeKey])) {
+                continue;
+            }
+            $seen[$dedupeKey] = true;
+
+            $events->push([
+                'seller_id' => $sellerId,
+                'seller_name' => $actor,
+                'activity' => $activity,
+                'description' => $data['description'] ?? 'Aktivitas produk',
+                'created_at' => $at,
+            ]);
+        }
+
+        return $events;
+    }
+
+    private function reviewPerformance(Carbon $start, Carbon $end): array
+    {
+        $reviews = Ulasan::publicVisible()->whereBetween('created_at', [$start, $end]);
+        $total = (clone $reviews)->count();
+        $distribution = [];
+        for ($stars = 5; $stars >= 1; $stars--) {
+            $distribution[$stars] = (clone $reviews)->where('rating', $stars)->count();
+        }
+
+        $topProducts = Produk::with('penjual')
+            ->withCount(['ulasan as period_reviews' => fn ($query) => $query->publicVisible()->whereBetween('created_at', [$start, $end])])
+            ->withAvg(['ulasan as period_rating' => fn ($query) => $query->publicVisible()->whereBetween('created_at', [$start, $end])], 'rating')
+            ->having('period_reviews', '>=', 1)
+            ->orderByDesc('period_reviews')
+            ->orderByDesc('period_rating')
+            ->limit(10)
+            ->get();
+
+        return [
+            'total' => $total,
+            'average' => round((float) (clone $reviews)->avg('rating'), 2),
+            'distribution' => $distribution,
+            'top_products' => $topProducts,
+        ];
+    }
+
+    /** @return array{Carbon, Carbon, string} */
+    private function periodRange(string $period): array
+    {
+        $today = now();
+
+        if ($period === 'monthly') {
+            $start = $today->copy()->startOfMonth();
+            $end = $today->copy()->endOfMonth();
+            $label = 'Bulanan';
+        } else {
+            $start = $today->copy()->startOfWeek(Carbon::MONDAY);
+            $end = $today->copy()->endOfWeek(Carbon::SUNDAY);
+            $label = 'Mingguan';
+        }
+
+        return [$start, $end, $label];
+    }
+}

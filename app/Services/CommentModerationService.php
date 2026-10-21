@@ -3,20 +3,18 @@
 namespace App\Services;
 
 use App\Models\BadWord;
-use App\Models\Whitelist;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class CommentModerationService
 {
-    protected const CACHE_BAD_WORDS_KEY = 'moderation_active_bad_words_v2';
-    protected const CACHE_WHITELISTS_KEY = 'moderation_active_whitelists_v2';
+    protected const CACHE_BAD_WORDS_KEY = 'moderation_active_bad_words_v4';
     protected const CACHE_TTL = 86400; // 24 jam
 
     /**
      * Jalankan moderasi lengkap pada teks komentar.
      *
-     * Alur: normalizeText() -> checkWhitelist() -> detectBadWords() -> returnModerationResult()
+     * Alur: normalisasi teks -> deteksi kata terlarang -> hasil moderasi.
      *
      * @param string|null $text
      * @return array{
@@ -41,10 +39,7 @@ class CommentModerationService
 
         [$normalizedText, $originalStartByByte, $originalEndByByte] = $this->normalizeWithOffsets($text);
 
-        // Periksa whitelist (dapat berupa frasa yang dikecualikan)
-        $whitelists = $this->getActiveWhitelists();
-
-        // Cari badwords yang aktif
+        // Daftar kata terlarang tidak dapat dilewati oleh whitelist.
         $badWordsData = $this->getActiveBadWords();
 
         if (empty($badWordsData)) {
@@ -64,22 +59,7 @@ class CommentModerationService
         $highestSeverityScore = 0; // 1: low, 2: medium, 3: high
         $matchCount = 0;
 
-        // Mask kata-kata whitelist agar tidak memicu false positive
         $maskedText = $normalizedText;
-        foreach ($whitelists as $whitelistPhrase) {
-            [$cleanPhrase] = $this->normalizeWithOffsets(trim($whitelistPhrase));
-            if ($cleanPhrase === '') {
-                continue;
-            }
-
-            $offset = 0;
-            while (($position = mb_stripos($maskedText, $cleanPhrase, $offset, 'UTF-8')) !== false) {
-                $length = strlen(mb_substr($maskedText, 0, $position, 'UTF-8'));
-                $phraseBytes = strlen(mb_substr($maskedText, $position, mb_strlen($cleanPhrase, 'UTF-8'), 'UTF-8'));
-                $maskedText = substr_replace($maskedText, str_repeat(' ', $phraseBytes), $length, $phraseBytes);
-                $offset = $position + mb_strlen($cleanPhrase, 'UTF-8');
-            }
-        }
 
         foreach ($badWordsData as $item) {
             $word = is_array($item) ? ($item['word'] ?? '') : (string) $item;
@@ -220,55 +200,42 @@ class CommentModerationService
      */
     public function getActiveBadWords(): array
     {
-        return Cache::remember(self::CACHE_BAD_WORDS_KEY, self::CACHE_TTL, function () {
+        return Cache::store('file')->remember(self::CACHE_BAD_WORDS_KEY, self::CACHE_TTL, function () {
+            $words = [];
+            $dictionaryPath = resource_path('dictionaries/badwords-list.json');
+
+            if (is_file($dictionaryPath)) {
+                $dictionary = json_decode(file_get_contents($dictionaryPath), true) ?: [];
+                foreach (['en' => 'english', 'id' => 'indonesian'] as $key => $language) {
+                    foreach (($dictionary[$key] ?? []) as $word) {
+                        $words[] = ['word' => $word, 'severity' => 'medium', 'language' => $language];
+                    }
+                }
+            }
+
             try {
                 if (Schema::hasTable('bad_words')) {
-                    return BadWord::where('is_active', true)
+                    $customWords = BadWord::where('is_active', true)
                         ->get(['word', 'severity', 'language'])
                         ->toArray();
+                    $words = array_merge($words, $customWords);
                 }
             } catch (\Throwable $e) {
-                // Fallback jika DB error
+                // Daftar bawaan tetap dapat dipakai jika database belum tersedia.
             }
 
-            $defaultWords = config('moderation.bad_words', [
-                'anjing', 'babi', 'bangsat', 'kontol', 'memek',
-                'goblok', 'tolol', 'kampret', 'asu', 'bajingan'
-            ]);
-
-            return array_map(fn($w) => ['word' => $w, 'severity' => 'medium', 'language' => 'indonesian'], $defaultWords);
+            return collect($words)
+                ->filter(fn ($item) => !empty($item['word']))
+                ->unique(fn ($item) => mb_strtolower(trim($item['word'])) . '|' . ($item['language'] ?? ''))
+                ->values()
+                ->all();
         });
     }
 
-    /**
-     * Ambil daftar whitelist aktif dari Cache.
-     *
-     * @return array<string>
-     */
-    public function getActiveWhitelists(): array
-    {
-        return Cache::remember(self::CACHE_WHITELISTS_KEY, self::CACHE_TTL, function () {
-            try {
-                if (Schema::hasTable('whitelists')) {
-                    return Whitelist::where('is_active', true)
-                        ->pluck('phrase')
-                        ->toArray();
-                }
-            } catch (\Throwable $e) {
-                // Fallback
-            }
-
-            return [];
-        });
-    }
-
-    /**
-     * Bersihkan cache moderasi ketika ada perubahan badword atau whitelist.
-     */
+    /** Bersihkan cache daftar kata terlarang. */
     public function clearCache(): void
     {
-        Cache::forget(self::CACHE_BAD_WORDS_KEY);
-        Cache::forget(self::CACHE_WHITELISTS_KEY);
+        Cache::store('file')->forget(self::CACHE_BAD_WORDS_KEY);
     }
 
     /**
@@ -282,7 +249,7 @@ class CommentModerationService
         }, $chars);
 
         // Gabungkan tiap karakter dengan opsi pemisah opsional (spasi, strip, titik)
-        $charPattern = implode('[\s\.\-_]*', $escapedChars);
+        $charPattern = implode('[\s\p{P}\p{S}\p{Cf}]*', $escapedChars);
 
         // Boundary agar tidak mencocokkan di dalam kata lain yang valid
         return '/(?<![a-zA-Z0-9])' . $charPattern . '(?![a-zA-Z0-9])/iu';

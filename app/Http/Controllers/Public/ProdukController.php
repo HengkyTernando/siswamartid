@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kategori;
-use App\Models\Penjual;
 use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,12 +19,12 @@ class ProdukController extends Controller
         $selectedKategori = $request->input('kategori');
         $sort = $request->input('sort', 'terbaru');
 
-        $kategoriList = Kategori::withCount(['produk' => fn ($query) => $query->where('status', 'aktif')])
+        $kategoriList = Kategori::withCount(['produk' => fn ($query) => $query->publicVisible()])
             ->orderBy('nama')
             ->get();
 
-        $produkQuery = Produk::with(['kategori', 'penjual'])
-            ->where('status', 'aktif')
+        $produkQuery = Produk::publicVisible()
+            ->with(['kategori', 'penjual'])
             ->when($selectedKategori, fn ($query) => $query->whereHas('kategori', fn ($category) => $category->where('slug', $selectedKategori)))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($searchQuery) use ($search) {
@@ -49,14 +48,12 @@ class ProdukController extends Controller
 
     /**
      * Tampilkan detail produk.
-     * Hanya produk aktif yang dapat diakses; increment views untuk produk aktif.
+     * Hanya produk aktif dari penjual aktif yang dapat diakses; increment views untuk produk aktif.
      */
     public function show(Produk $produk): View
     {
-        // Pastikan hanya produk aktif yang bisa diakses
-        abort_if($produk->status !== 'aktif', 404);
+        abort_if($produk->status !== 'aktif' || ! ($produk->penjual?->user?->is_active), 404);
 
-        // Tambah counter view (hanya produk aktif, dari halaman public)
         $produk->increment('views');
         try {
             \App\Models\ProdukViewLog::create([
@@ -75,12 +72,12 @@ class ProdukController extends Controller
             ->latest()
             ->get();
 
-        // Produk Terkait (kategori sama, aktif, tidak termasuk diri sendiri)
-        $produkTerkait = Produk::with(['kategori', 'penjual'])
+        // Produk Terkait (kategori sama, aktif & penjual aktif, tidak termasuk diri sendiri)
+        $produkTerkait = Produk::publicVisible()
+            ->with(['kategori', 'penjual'])
             ->withAvg(['ulasan' => fn($q) => $q->publicVisible()], 'rating')
             ->where('kategori_id', $produk->kategori_id)
             ->where('id', '!=', $produk->id)
-            ->where('status', 'aktif')
             ->latest()
             ->limit(4)
             ->get();
@@ -93,7 +90,16 @@ class ProdukController extends Controller
      */
     public function trackWhatsapp(Produk $produk): \Illuminate\Http\RedirectResponse
     {
-        abort_if($produk->status !== 'aktif', 404);
+        abort_if($produk->status !== 'aktif' || ! ($produk->penjual?->user?->is_active), 404);
+
+        $waNumber = preg_replace('/[^0-9]/', '', $produk->penjual->nomor_whatsapp ?? '');
+        if (empty($waNumber)) {
+            return back()->with('error', 'Nomor kontak WhatsApp penjual belum tersedia.');
+        }
+
+        if (str_starts_with($waNumber, '0')) {
+            $waNumber = '62' . substr($waNumber, 1);
+        }
 
         try {
             \App\Models\ProdukViewLog::create([
@@ -104,13 +110,11 @@ class ProdukController extends Controller
             // Safe fallback
         }
 
-        $waNumber = $produk->penjual->nomor_whatsapp ?? '';
-        if (str_starts_with($waNumber, '0')) {
-            $waNumber = '62' . substr($waNumber, 1);
-        } elseif (str_starts_with($waNumber, '+')) {
-            $waNumber = substr($waNumber, 1);
-        }
-        $waMsg  = "Halo, saya tertarik dengan produk:\n*" . $produk->nama . "*\n\nApakah produk ini masih tersedia?";
+        $prefixNotice = ($produk->penjual->status_toko === 'tutup') 
+            ? "[Pemberitahuan: Toko sedang tutup, balasan mungkin tertunda]\n\n" 
+            : "";
+
+        $waMsg  = $prefixNotice . "Halo, saya tertarik dengan produk:\n*" . $produk->nama . "*\n\nApakah produk ini masih tersedia?";
         $waLink = "https://wa.me/" . $waNumber . "?text=" . rawurlencode($waMsg);
 
         return redirect()->away($waLink);

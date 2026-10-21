@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kategori;
 use App\Models\Produk;
 use App\Models\Penjual;
+use App\Models\Ulasan;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -21,12 +22,12 @@ class HomeController extends Controller
 
         // 1. Kategori
         $kategoriList = Kategori::withCount([
-            'produk as produk_aktif_count' => fn ($query) => $query->where('status', 'aktif'),
+            'produk as produk_aktif_count' => fn ($query) => $query->publicVisible(),
         ])->orderBy('nama')->get();
 
-        // Katalog khusus beranda mobile, memakai produk aktif dan filter yang sama dengan katalog publik.
-        $produkMobile = Produk::with(['kategori', 'penjual'])
-            ->where('status', 'aktif')
+        // Katalog khusus beranda mobile, memakai produk aktif dari penjual aktif
+        $produkMobile = Produk::publicVisible()
+            ->with(['kategori', 'penjual'])
             ->when($selectedKategori, fn ($query) => $query->whereHas('kategori', fn ($category) => $category->where('slug', $selectedKategori)))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($searchQuery) use ($search) {
@@ -40,9 +41,9 @@ class HomeController extends Controller
             ->withQueryString();
 
         // 2. Rekomendasi Produk (5 item)
-        $produkRekomendasi = Produk::with(['kategori', 'penjual'])
+        $produkRekomendasi = Produk::publicVisible()
+            ->with(['kategori', 'penjual'])
             ->withAvg(['ulasan' => fn($q) => $q->publicVisible()], 'rating')
-            ->where('status', 'aktif')
             ->orderByDesc('ulasan_avg_rating')
             ->orderByDesc('views')
             ->latest()
@@ -50,21 +51,30 @@ class HomeController extends Controller
             ->get();
             
         // 3. Produk Populer (Top 3 views)
-        $produkPopuler = Produk::with(['kategori', 'penjual'])
-            ->where('status', 'aktif')
+        $produkPopuler = Produk::publicVisible()
+            ->with(['kategori', 'penjual'])
             ->orderByDesc('views')
+            ->limit(3)
+            ->get();
+
+        // Tampilkan hanya ulasan yang memang sudah dapat dilihat publik dari produk aktif penjual aktif.
+        $ulasanPilihan = Ulasan::with('produk')
+            ->whereHas('produk', fn ($query) => $query->publicVisible())
+            ->publicVisible()
+            ->latest()
             ->limit(3)
             ->get();
             
         // 4. Statistik Dashboard
-        $totalProduk = Produk::where('status', 'aktif')->count();
-        $totalPenjual = Penjual::count();
+        $totalProduk = Produk::publicVisible()->count();
+        $totalPenjual = Penjual::whereHas('user', fn($q) => $q->where('is_active', true))->count();
         $totalKategori = Kategori::count();
 
         return view('public.home.index', compact(
             'kategoriList', 
             'produkRekomendasi', 
             'produkPopuler',
+            'ulasanPilihan',
             'totalProduk',
             'totalPenjual',
             'totalKategori',

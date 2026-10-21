@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust all proxies (penting untuk HTTPS di reverse proxy / hosting cPanel / DirectAdmin / Cloudflare)
+        $middleware->trustProxies(at: '*');
+
         // Daftarkan middleware role sebagai alias
         $middleware->alias([
             'admin'   => \App\Http\Middleware\EnsureAdmin::class,

@@ -16,13 +16,28 @@
         </a>
     </div>
 
-    {{-- Filter Tabs --}}
-    <div class="flex gap-2 mb-6 border-b border-[var(--border-color)] overflow-x-auto pb-2">
-        <a href="{{ route('penjual.produk.index') }}" class="px-4 py-2 text-sm rounded-t-lg transition-colors {{ request('status') === null ? 'text-[var(--text-main)] font-black border-b-4 border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'text-[var(--text-muted)] font-bold hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)] border-b-4 border-transparent' }}">Semua <span class="text-xs bg-[var(--color-primary)] text-[var(--border-color)] border border-[var(--border-color)] shadow-[1px_1px_0px_0px_var(--border-color)] font-bold rounded-full px-2 py-0.5 ml-1">{{ \App\Models\Produk::where('penjual_id', Auth::user()->penjual->id)->count() }}</span></a>
-        <a href="{{ route('penjual.produk.index', ['status' => 'aktif']) }}" class="px-4 py-2 text-sm rounded-t-lg transition-colors {{ request('status') === 'aktif' ? 'text-[var(--text-main)] font-black border-b-4 border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'text-[var(--text-muted)] font-bold hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)] border-b-4 border-transparent' }}">Aktif</a>
-        <a href="{{ route('penjual.produk.index', ['status' => 'pending']) }}" class="px-4 py-2 text-sm rounded-t-lg transition-colors {{ request('status') === 'pending' ? 'text-[var(--text-main)] font-black border-b-4 border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'text-[var(--text-muted)] font-bold hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)] border-b-4 border-transparent' }}">Menunggu Moderasi</a>
-        <a href="{{ route('penjual.produk.index', ['status' => 'ditolak']) }}" class="px-4 py-2 text-sm rounded-t-lg transition-colors {{ request('status') === 'ditolak' ? 'text-[var(--text-main)] font-black border-b-4 border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'text-[var(--text-muted)] font-bold hover:bg-[var(--bg-surface)] hover:text-[var(--text-main)] border-b-4 border-transparent' }}">Ditolak</a>
-    </div>
+    {{-- Product status filters --}}
+    @php
+        $productTabs = [
+            ['label' => 'Semua', 'status' => null, 'count' => (int) $statusCounts->get('all', 0)],
+            ['label' => 'Aktif', 'status' => 'aktif', 'count' => (int) $statusCounts->get('aktif', 0)],
+            ['label' => 'Menunggu Moderasi', 'status' => 'pending', 'count' => (int) $statusCounts->get('pending', 0)],
+            ['label' => 'Ditolak', 'status' => 'ditolak', 'count' => (int) $statusCounts->get('ditolak', 0)],
+        ];
+    @endphp
+    <nav aria-label="Filter status produk" class="seller-product-filter mb-6 flex flex-wrap gap-2 rounded-[24px] border-2 border-[var(--ink)] bg-[var(--white-warm)] p-2 shadow-[3px_3px_0_var(--ink)]">
+        @foreach($productTabs as $tab)
+            @php($isActive = $status === $tab['status'])
+            <a href="{{ $tab['status'] ? route('penjual.produk.index', ['status' => $tab['status']]) : route('penjual.produk.index') }}"
+               @if($isActive) aria-current="page" @endif
+               class="seller-product-filter__link inline-flex min-h-11 items-center justify-center gap-3 rounded-full border-2 px-4 py-2 text-sm font-bold transition duration-150 hover:-translate-y-0.5 focus-visible:outline-none {{ $isActive ? 'border-[var(--ink)] bg-[var(--brand)] text-[var(--ink)]' : 'border-transparent bg-transparent text-[var(--ink-soft)] hover:border-[var(--ink)] hover:bg-[var(--cream-2)]' }}">
+                <span>{{ $tab['label'] }}</span>
+                @if($tab['count'] > 0 || in_array($tab['status'], [null, 'aktif'], true))
+                    <span class="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-[var(--ink)] px-2 text-xs {{ $isActive ? 'bg-[var(--white-warm)] text-[var(--ink)]' : 'bg-[var(--cream-2)] text-[var(--ink)]' }}">{{ $tab['count'] }}</span>
+                @endif
+            </a>
+        @endforeach
+    </nav>
 
     <div class="admin-card">
         <div class="overflow-x-auto">
@@ -62,28 +77,39 @@
                             <div class="font-bold text-[var(--text-main)]">{{ number_format($p->views) }} <span class="font-normal text-[var(--text-muted)] text-[10px]">kali</span></div>
                         </td>
                         <td class="px-5 py-4">
-                            <span class="badge badge-{{ $p->status === 'aktif' ? 'aktif' : ($p->status === 'pending' ? 'pending' : ($p->status === 'ditolak' ? 'ditolak' : 'draft')) }}">
-                                {{ ucfirst($p->status) }}
+                            <span class="badge badge-{{ $p->pending_action ? 'pending' : ($p->status === 'aktif' ? 'aktif' : ($p->status === 'pending' ? 'pending' : ($p->status === 'ditolak' ? 'ditolak' : 'draft'))) }}">
+                                @if($p->pending_action === 'create') Menunggu persetujuan
+                                @elseif($p->pending_action === 'update') Menunggu persetujuan perubahan
+                                @elseif($p->pending_action === 'delete') Menunggu persetujuan hapus
+                                @else {{ ucfirst($p->status) }} @endif
                             </span>
-                            @if($p->status === 'ditolak' && $p->alasan_ditolak)
+                            @if($p->alasan_ditolak && !$p->pending_action)
                                 <div class="text-[10px] text-[#ea4335] mt-1 line-clamp-1" title="{{ $p->alasan_ditolak }}">Alasan: {{ $p->alasan_ditolak }}</div>
                             @endif
                         </td>
                         <td class="px-5 py-4">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="{{ route('penjual.produk.edit', $p) }}" class="btn-outline text-xs px-3 py-1.5">Edit</a>
-                                
-                                <form method="POST" action="{{ route('penjual.produk.destroy', $p) }}" onsubmit="return confirm('Hapus produk ini secara permanen?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn-outline text-xs px-3 py-1.5 text-[#ea4335] border-[#ea4335] hover:bg-[#fce8e6]">Hapus</button>
-                                </form>
+                                @if(!$p->pending_action)
+                                    <a href="{{ route('penjual.produk.edit', $p) }}" class="btn-outline text-xs px-3 py-1.5">Edit</a>
+
+                                    <form method="POST" action="{{ route('penjual.produk.destroy', $p) }}" onsubmit="return confirm('Kirim permintaan penghapusan produk ini kepada Admin? Produk baru dihapus setelah disetujui.')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn-outline text-xs px-3 py-1.5 text-[#ea4335] border-[#ea4335] hover:bg-[#fce8e6]">Minta Hapus</button>
+                                    </form>
+                                @else
+                                    <span class="text-xs font-semibold text-[var(--ink-soft)]">Menunggu Admin</span>
+                                @endif
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
                         <td colspan="5" class="px-5 py-12 text-center text-[var(--text-muted)]">
-                            Belum ada produk. Tambahkan produk pertamamu.
+                            @if($status)
+                                Belum ada produk dengan status {{ strtolower($productTabs[array_search($status, array_column($productTabs, 'status'))]['label'] ?? $status) }}.
+                            @else
+                                Belum ada produk. Tambahkan produk pertamamu.
+                            @endif
                         </td>
                     </tr>
                     @endforelse

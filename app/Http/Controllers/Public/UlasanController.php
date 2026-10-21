@@ -27,11 +27,14 @@ class UlasanController extends Controller
 
         $originalText = $validated['komentar'] ?? '';
 
-        // Periksa badword dan whitelist melalui CommentModerationService
+        // Tolak sebelum penyimpanan jika isi ulasan mengandung kata terlarang.
         $modResult = $moderationService->moderate($originalText);
 
-        $isFiltered = $modResult['detected'];
-        $status = $isFiltered ? 'filtered' : 'approved';
+        if ($modResult['detected']) {
+            return redirect()->to(route('public.produk.show', $produk->slug) . '#ulasan')
+                ->withInput()
+                ->with('review_warning', 'Ulasan tidak terkirim karena mengandung kata yang tidak pantas. Silakan perbaiki isi ulasan lalu kirim kembali.');
+        }
 
         $ulasan = Ulasan::create([
             'produk_id'         => $produk->id,
@@ -41,13 +44,9 @@ class UlasanController extends Controller
             'original_komentar' => $originalText,
             'display_content'   => null,
             'is_censored'       => false,
-            'moderation_status' => $status,
-            'status'            => $status,
-            'detected_words'    => $isFiltered ? [
-                'words'    => $modResult['words'],
-                'severity' => $modResult['severity'],
-                'count'    => $modResult['match_count'],
-            ] : null,
+            'moderation_status' => 'approved',
+            'status'            => 'approved',
+            'detected_words'    => null,
         ]);
 
         $notificationService->notifyAdmins([
@@ -60,11 +59,7 @@ class UlasanController extends Controller
             'url' => route('admin.komentar.index', ['status' => 'semua', 'tab' => 'komentar']),
         ]);
 
-        $msg = $isFiltered
-            ? 'Ulasanmu sudah dikirim dan sedang dicek Admin.'
-            : 'Ulasanmu berhasil dikirim.';
-
         return redirect()->route('public.produk.show', $produk->slug)
-            ->with('success', $msg);
+            ->with('success', 'Ulasanmu berhasil dikirim.');
     }
 }

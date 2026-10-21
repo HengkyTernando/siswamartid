@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Penjual;
 
 use App\Http\Controllers\Controller;
+use App\Models\Penjual;
 use App\Models\Produk;
 use App\Models\ProdukViewLog;
 use App\Models\Ulasan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class LaporanController extends Controller
@@ -22,16 +26,49 @@ class LaporanController extends Controller
             abort(403, 'Akses khusus penjual.');
         }
 
-        $penjualId = $penjual->id;
-
-        // ── 1. Penentuan Periode Minggu ────────────────────────────────────────
         $weekOffset = (int) $request->query('week_offset', 0);
-        
-        // Mencegah navigasi ke minggu depan jika offset > 0
         if ($weekOffset > 0) {
             $weekOffset = 0;
         }
 
+        $data = $this->buildReportData($penjual, $weekOffset);
+
+        return view('penjual.laporan.index', $data);
+    }
+
+    /**
+     * Unduh PDF Rekapitulasi Mingguan Laporan Promosi Penjual.
+     */
+    public function pdf(Request $request): Response
+    {
+        $penjual = auth()->user()->penjual;
+        if (!$penjual) {
+            abort(403, 'Akses khusus penjual.');
+        }
+
+        $weekOffset = (int) $request->query('week_offset', 0);
+        if ($weekOffset > 0) {
+            $weekOffset = 0;
+        }
+
+        $data = $this->buildReportData($penjual, $weekOffset);
+
+        $safeStoreName = Str::slug($penjual->nama_toko ?: 'toko');
+        $filename = 'rekap-penjual-' . $safeStoreName . '-' . $data['selectedStart']->format('Ymd') . '.pdf';
+
+        return Pdf::loadView('penjual.laporan.pdf', $data)
+            ->setPaper('a4', 'portrait')
+            ->download($filename);
+    }
+
+    /**
+     * Siapkan data agregat laporan performa mingguan penjual.
+     */
+    protected function buildReportData(Penjual $penjual, int $weekOffset): array
+    {
+        $penjualId = $penjual->id;
+
+        // ── 1. Penentuan Periode Minggu ────────────────────────────────────────
         Carbon::setLocale('id');
 
         $selectedStart = Carbon::now()->addWeeks($weekOffset)->startOfWeek(Carbon::MONDAY)->startOfDay();
@@ -70,19 +107,6 @@ class LaporanController extends Controller
 
         $viewsComp = $this->calculateComparison($viewsThisWeek, $viewsPrevWeek);
 
-        // WA Clicks minggu ini & lalu
-        $waThisWeek = ProdukViewLog::whereIn('produk_id', $sellerProdukIds)
-            ->where('type', 'whatsapp')
-            ->whereBetween('created_at', [$selectedStart, $selectedEnd])
-            ->count();
-
-        $waPrevWeek = ProdukViewLog::whereIn('produk_id', $sellerProdukIds)
-            ->where('type', 'whatsapp')
-            ->whereBetween('created_at', [$prevStart, $prevEnd])
-            ->count();
-
-        $waComp = $this->calculateComparison($waThisWeek, $waPrevWeek);
-
         // Ulasan Baru minggu ini & lalu
         $ulasanThisWeek = Ulasan::whereIn('produk_id', $sellerProdukIds)
             ->publicVisible()
@@ -99,7 +123,6 @@ class LaporanController extends Controller
         // ── 3. Grafik Performa 7 Hari ──────────────────────────────────────────
         $chartLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         $chartViewsData = [];
-        $chartWaData = [];
 
         for ($i = 0; $i < 7; $i++) {
             $dayStart = (clone $selectedStart)->addDays($i)->startOfDay();
@@ -110,13 +133,7 @@ class LaporanController extends Controller
                 ->whereBetween('created_at', [$dayStart, $dayEnd])
                 ->count();
 
-            $wCount = ProdukViewLog::whereIn('produk_id', $sellerProdukIds)
-                ->where('type', 'whatsapp')
-                ->whereBetween('created_at', [$dayStart, $dayEnd])
-                ->count();
-
             $chartViewsData[] = $vCount;
-            $chartWaData[]    = $wCount;
         }
 
         // ── 4. Produk Terpopuler (Top 5) ──────────────────────────────────────
@@ -179,51 +196,27 @@ class LaporanController extends Controller
             ->get();
 
         // ── 7. Insight Performa Faktual ───────────────────────────────────────
-        $insights = [];
-        $topOne = $produkTerpopuler->first();
-
-        if ($topOne && ($topOne->period_views > 0 || $topOne->views > 0)) {
-            $viewsCount = $topOne->period_views > 0 ? $topOne->period_views : $topOne->views;
-            $insights[] = "Produk '{$topOne->nama}' menjadi produk paling banyak dilihat minggu ini dengan {$viewsCount} views.";
-        }
-
-        if ($viewsComp['type'] === 'up' && $viewsComp['percent'] > 0) {
-            $insights[] = "Jumlah kunjungan produk meningkat {$viewsComp['percent']}% dibanding minggu sebelumnya.";
-        } elseif ($viewsComp['type'] === 'down' && $viewsComp['percent'] < 0) {
-            $insights[] = "Jumlah kunjungan produk turun " . abs($viewsComp['percent']) . "% dibanding minggu sebelumnya.";
-        }
-
-        if ($waThisWeek > 0) {
-            $insights[] = "Toko Anda mendapatkan {$waThisWeek} klik potensi pembeli via WhatsApp minggu ini.";
-        }
-
-        if (empty($insights)) {
-            $insights[] = "Belum cukup data untuk membuat insight performa minggu ini.";
-        }
-
         $produk = $produkTerpopuler;
 
-        return view('penjual.laporan.index', compact(
+        return compact(
             'penjual',
             'weekOffset',
+            'selectedStart',
+            'selectedEnd',
             'periodLabel',
             'canGoNext',
             'totalProdukCount',
             'viewsThisWeek',
             'viewsComp',
-            'waThisWeek',
-            'waComp',
             'ulasanThisWeek',
             'ulasanComp',
             'chartLabels',
             'chartViewsData',
-            'chartWaData',
             'produkTerpopuler',
             'produk',
             'performaProduk',
-            'ulasanMingguan',
-            'insights'
-        ));
+            'ulasanMingguan'
+        );
     }
 
     /**
@@ -257,14 +250,14 @@ class LaporanController extends Controller
 
         if ($diff > 0) {
             return [
-                'text' => "↑ {$percent}% (+{$diff}) dari minggu lalu",
+                'text' => "Naik {$percent}% (+{$diff}) dari minggu lalu",
                 'type' => 'up',
                 'diff' => $diff,
                 'percent' => $percent,
             ];
         } elseif ($diff < 0) {
             return [
-                'text' => "↓ " . abs($percent) . "% ({$diff}) dari minggu lalu",
+                'text' => "Turun " . abs($percent) . "% ({$diff}) dari minggu lalu",
                 'type' => 'down',
                 'diff' => $diff,
                 'percent' => $percent,

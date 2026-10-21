@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'SiswaMart')
-@section('meta_description', 'Temukan makanan, minuman, dan jajanan karya siswa SMKN 11 Bandung. Hubungi penjual langsung melalui WhatsApp.')
+@section('meta_description', 'Jelajahi SiswaMart, katalog makanan, minuman, dan jajanan buatan siswa SMKN 11 Bandung. Temukan produk favorit dan hubungi penjual langsung via WhatsApp.')
 
 @section('content')
     @php
@@ -197,5 +197,4 @@
         </section>
     </div>
 @endsection
-
 

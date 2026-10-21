@@ -48,6 +48,10 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if ($user->role === 'penjual' && $user->penjual && $user->penjual->produk()->exists()) {
+            return back()->with('error', 'Akun toko yang masih memiliki produk tidak dapat dihapus secara mandiri. Silakan hubungi admin sekolah.');
+        }
+
         Auth::logout();
 
         $user->delete();

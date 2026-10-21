@@ -1,30 +1,34 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Terima kasih sudah mendaftar! Cek inbox emailmu dan klik link verifikasi sebelum mulai menggunakan SiswaMart.') }}
+    <div class="mb-5 text-center">
+        <a href="{{ route('public.home') }}" class="auth-wordmark mb-2.5 inline-flex rounded-full px-4 py-1.5 font-display text-sm font-bold leading-none" aria-label="SiswaMart, kembali ke beranda">
+            <span class="auth-wordmark__siswamart">Siswa</span><span class="auth-wordmark__mart">Mart</span>
+        </a>
+        <h1 class="font-display text-2xl font-bold text-[var(--text-main)]">Verifikasi Email</h1>
+        <p class="mt-1 text-xs text-[var(--ink-soft)]">Terima kasih sudah bergabung! Silakan cek inbox emailmu dan klik link verifikasi untuk melanjutkan.</p>
     </div>
 
     @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('Link verifikasi baru sudah dikirim ke emailmu.') }}
+        <div role="status" class="mb-4 flex items-start gap-2.5 rounded-xl border-2 border-[#166534] bg-[#f0fdf4] px-3.5 py-2.5 text-xs font-semibold text-[#166534] shadow-[2px_2px_0_var(--ink)]">
+            <svg aria-hidden="true" class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span>Link verifikasi baru telah dikirimkan ke alamat emailmu.</span>
         </div>
     @endif
 
-    <div class="mt-4 flex items-center justify-between">
+    <div class="space-y-3 pt-2">
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Kirim Ulang Link Verifikasi') }}
-                </x-primary-button>
-            </div>
+            <button type="submit" class="btn-primary w-full justify-center py-3 text-sm font-bold">
+                Kirim Ulang Link Verifikasi
+            </button>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('logout') }}" class="text-center">
             @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Keluar') }}
+            <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--ink-soft)] hover:text-[var(--ink)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]">
+                Keluar dari akun
             </button>
         </form>
     </div>

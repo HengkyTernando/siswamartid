@@ -6,6 +6,7 @@ use App\Models\Produk;
 use App\Models\Ulasan;
 use App\Services\CommentModerationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ReviewController extends ApiController
 {
@@ -67,9 +68,13 @@ class ReviewController extends ApiController
          */
         $moderated = $moderation->moderate($comment);
 
-        $status = $moderated['detected']
-            ? 'filtered'
-            : 'approved';
+        if ($moderated['detected']) {
+            $commentField = array_key_exists('comment', $request->all()) ? 'comment' : 'komentar';
+
+            throw ValidationException::withMessages([
+                $commentField => 'Ulasan ditolak karena terdeteksi kata yang tidak pantas. Silakan ubah isi ulasan lalu coba lagi.',
+            ]);
+        }
 
         /*
          * Simpan ulasan.
@@ -81,25 +86,14 @@ class ReviewController extends ApiController
             'original_komentar' => $comment,
             'display_content' => null,
             'is_censored' => false,
-            'moderation_status' => $status,
-            'status' => $status,
-
-            'detected_words' => $moderated['detected']
-                ? [
-                    'words' => $moderated['words'],
-                    'severity' => $moderated['severity'],
-                    'count' => $moderated['match_count'],
-                ]
-                : null,
+            'moderation_status' => 'approved',
+            'status' => 'approved',
+            'detected_words' => null,
         ]);
-
-        $message = $moderated['detected']
-            ? 'Ulasan dikirim dan menunggu moderasi admin.'
-            : 'Ulasan berhasil dikirim.';
 
         return $this->success(
             $this->reviewData($review),
-            $message,
+            'Ulasan berhasil dikirim.',
             201
         );
     }

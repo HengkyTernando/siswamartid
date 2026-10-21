@@ -13,101 +13,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
 
-    <style>
-        :root {
-            --bg-body: #FFF8E8;
-            --bg-surface: #FFFCF5;
-            --text-main: #241A14;
-            --text-muted: #64748B;
-            --border-color: #241A14;
-            --primary-color: #FF7A00;
-            --primary-hover: #E66A00;
-            --focus-ring: rgba(255, 122, 0, 0.3);
-            --bg-input: #FFF8E8;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .auth-card {
-            background-color: var(--bg-surface);
-            border: 2px solid var(--border-color);
-            border-radius: 24px;
-            box-shadow: 4px 4px 0px 0px var(--border-color);
-            transition: all 0.3s ease;
-        }
-
-        .form-input {
-            width: 100%;
-            background-color: var(--bg-input);
-            border: 2px solid var(--border-color);
-            color: var(--text-main);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-            box-shadow: 2px 2px 0px 0px var(--border-color);
-            transition: all 0.2s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            background-color: var(--bg-surface);
-            box-shadow: 4px 4px 0px 0px var(--border-color);
-            transform: translate(-2px, -2px);
-        }
-
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--primary-color);
-            color: var(--border-color);
-            font-weight: 800;
-            font-size: 0.875rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
-            border: 2px solid var(--border-color);
-            box-shadow: 4px 4px 0px 0px var(--border-color);
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            transform: translate(-2px, -2px);
-            box-shadow: 6px 6px 0px 0px var(--border-color);
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/siswamart-theme.css') }}">
 </head>
-<body class="antialiased min-h-screen flex flex-col justify-center items-center p-4">
+<body class="auth-page {{ request()->routeIs('login', 'password.*', 'verification.*') ? 'auth-page--login' : '' }} antialiased min-h-screen flex flex-col justify-center items-center p-4">
 
     <!-- Removed Theme Toggle -->
 
-    <div class="w-full max-w-[420px]">
-        <!-- Logo -->
-        <div class="flex justify-center mb-8">
-            <a href="/" class="flex items-center justify-center text-4xl md:text-5xl font-black tracking-tight drop-shadow-sm transition-transform hover:scale-105">
-                <span class="text-[var(--text-main)]">Siswa</span><span class="text-[#ea580c]">Mart</span>
-            </a>
+    @unless (request()->routeIs('login', 'password.*', 'verification.*'))
+    <nav class="auth-site-nav" aria-label="Navigasi utama">
+        <a href="{{ route('public.home') }}" class="auth-site-logo" aria-label="SiswaMart — Beranda"><span>Siswa</span><strong>Mart</strong></a>
+        <div class="auth-site-links">
+            <a href="{{ route('public.home') }}">Beranda</a>
+            <a href="{{ route('public.kategori.index') }}">Kategori</a>
+            <a href="{{ route('public.cara_pemesanan') }}">Cara Memesan</a>
+            <a href="{{ route('public.tentang_kami') }}">Tentang Kami</a>
         </div>
+        <a href="{{ route('public.produk.index') }}" class="auth-site-action">Jelajahi katalog</a>
+    </nav>
+    @endunless
 
+    <main class="auth-shell">
         <!-- Card Container -->
-        <div class="auth-card p-8 sm:p-10">
+        <div class="auth-card">
             {{ $slot }}
         </div>
-        
-        <!-- Footer info -->
-        <p class="text-center text-xs text-[var(--text-muted)] mt-8">
-            &copy; {{ date('Y') }} SiswaMart. Khusus untuk media promosi internal sekolah.
-        </p>
-    </div>
+    </main>
+
+    @unless (request()->routeIs('login', 'password.*', 'verification.*'))
+    <footer class="auth-site-footer">
+        <span>© {{ date('Y') }} SiswaMart · Produk karya siswa SMKN 11 Bandung</span>
+        <a href="https://wa.me/6285724494193" target="_blank" rel="noopener noreferrer">Hubungi SiswaMart · WhatsApp</a>
+    </footer>
+    @endunless
+
+    <x-back-floating />
 
     <!-- Removed Dark Mode Script -->
 </body>
 </html>
+

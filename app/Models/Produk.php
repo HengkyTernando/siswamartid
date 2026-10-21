@@ -33,6 +33,8 @@ class Produk extends Model
         'foto_utama',
         'status',
         'alasan_ditolak',
+        'pending_action',
+        'pending_changes',
         'views',
     ];
 
@@ -45,6 +47,7 @@ class Produk extends Model
     {
         return [
             'harga' => 'decimal:2',
+            'pending_changes' => 'array',
         ];
     }
 
@@ -96,5 +99,17 @@ class Produk extends Model
     public function getReviewCountAttribute(): int
     {
         return $this->ulasan()->publicVisible()->count();
+    }
+
+    /**
+     * Scope produk yang boleh tampil di publik:
+     * status = 'aktif' dan akun user penjualnya aktif (is_active = true).
+     */
+    public function scopePublicVisible($query)
+    {
+        return $query->where('status', 'aktif')
+            ->whereHas('penjual.user', function ($q) {
+                $q->where('is_active', true);
+            });
     }
 }

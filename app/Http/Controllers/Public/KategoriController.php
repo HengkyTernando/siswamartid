@@ -21,12 +21,10 @@ class KategoriController extends Controller
         $sort = $request->input('sort', 'terbaru');
 
         $kategoriList = Kategori::withCount(['produk' => function ($q) {
-            $q->where('status', 'aktif');
+            $q->publicVisible();
         }])->orderBy('nama')->get();
 
-        $totalSemua = Produk::where('status', 'aktif')->count();
-
-        $produkQuery = Produk::with(['kategori', 'penjual'])->where('status', 'aktif');
+        $produkQuery = Produk::publicVisible()->with(['kategori', 'penjual']);
 
         if ($search) {
             $produkQuery->where(function ($q) use ($search) {
@@ -60,7 +58,7 @@ class KategoriController extends Controller
 
         $produk = $produkQuery->paginate(12)->withQueryString();
 
-        return view('public.kategori.index', compact('kategoriList', 'produk', 'search', 'totalSemua', 'minPrice', 'maxPrice', 'sort'));
+        return view('public.kategori.index', compact('kategoriList', 'produk', 'search', 'minPrice', 'maxPrice', 'sort'));
     }
 
     /**
@@ -74,14 +72,12 @@ class KategoriController extends Controller
         $sort = $request->input('sort', 'terbaru');
 
         $kategoriList = Kategori::withCount(['produk' => function ($q) {
-            $q->where('status', 'aktif');
+            $q->publicVisible();
         }])->orderBy('nama')->get();
 
-        $totalSemua = Produk::where('status', 'aktif')->count();
-
-        $produkQuery = Produk::with(['kategori', 'penjual'])
-            ->where('kategori_id', $kategori->id)
-            ->where('status', 'aktif');
+        $produkQuery = Produk::publicVisible()
+            ->with(['kategori', 'penjual'])
+            ->where('kategori_id', $kategori->id);
 
         if ($search) {
             $produkQuery->where(function ($q) use ($search) {
@@ -115,6 +111,6 @@ class KategoriController extends Controller
 
         $produk = $produkQuery->paginate(12)->withQueryString();
 
-        return view('public.kategori.show', compact('kategoriList', 'kategori', 'produk', 'search', 'totalSemua', 'minPrice', 'maxPrice', 'sort'));
+        return view('public.kategori.show', compact('kategoriList', 'kategori', 'produk', 'search', 'minPrice', 'maxPrice', 'sort'));
     }
 }

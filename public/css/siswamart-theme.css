@@ -77,6 +77,8 @@ body:not(.home-page) :is(h1,h2,h3,h4,.font-display) { color: var(--ink); font-fa
 body:not(.home-page) :is(p,li,label,small) { color: inherit; }
 body:not(.home-page) a, body:not(.home-page) button, body:not(.home-page) input, body:not(.home-page) select, body:not(.home-page) textarea { -webkit-tap-highlight-color: transparent; }
 body:not(.home-page) :is(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--ink) !important; outline-offset: 3px; }
+/* Dropdown controls keep their rounded border focus state without an outer outline. The site navbar keeps its existing focus treatment. */
+body :is(select,[aria-haspopup],[aria-expanded]):focus-visible:not(header *):not(.home-navbar *) { outline: none !important; outline-offset: 0 !important; border-color: var(--brand) !important; }
 
 /* Shared public shell */
 body:not(.home-page):not(.public-site-page) > header { top: 16px !important; width: min(calc(100% - 2 * var(--gutter)), calc(var(--container) - 2 * var(--gutter))) !important; max-width: var(--container) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; }
@@ -199,9 +201,60 @@ body.auth-page .auth-card h2 { margin-bottom:8px; font-family:'Fredoka','Plus Ja
 body.auth-page .auth-card > div:first-child p { max-width:34ch; margin-inline:auto; color:var(--ink-soft); line-height:1.55; }
 body.auth-page .auth-card .form-input { display:block; width:100%; min-height:56px; padding:12px 16px; border:var(--border) !important; border-radius:var(--r-input) !important; background:var(--cream) !important; box-shadow:2px 2px 0 var(--ink) !important; font-size:.95rem; transition:box-shadow .18s ease,background-color .18s ease; }
 body.auth-page .auth-card .form-input:focus { transform:none; background:var(--white-warm) !important; box-shadow:2px 2px 0 var(--ink) !important; }
-body.auth-page .auth-card .form-input:focus-visible { outline:3px solid var(--ink) !important; outline-offset:3px; }
 body.auth-page .auth-card input[type="checkbox"] { width:22px; height:22px; flex:0 0 auto; border:2px solid var(--ink); border-radius:7px; }
 body.auth-page .auth-card button[type="submit"] { min-height:56px; font-size:1rem; }
+.auth-wordmark { border:var(--border); border-radius:var(--r-pill); background:var(--cream-2); box-shadow:2px 2px 0 var(--ink); text-decoration:none; }
+.auth-wordmark__siswamart { color:var(--ink) !important; }
+.auth-wordmark__mart { color:var(--brand-ink) !important; }
+.auth-google-button { margin-top:2px; border:var(--border) !important; border-radius:var(--r-pill) !important; background:var(--cream-2) !important; color:var(--ink) !important; box-shadow:var(--shadow) !important; transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease; }
+.auth-google-button:hover { transform:translate(-2px,-2px); background:var(--mint) !important; box-shadow:var(--shadow-hover) !important; }
+.auth-google-button:active { transform:translate(2px,2px); box-shadow:var(--shadow-active) !important; }
+.auth-google-icon { border:1.5px solid color-mix(in srgb,var(--ink) 20%,transparent); }
+.auth-page .auth-card > p[aria-hidden="true"] { margin-block:24px; }
+.auth-page .auth-card > aside { margin-top:32px; }
+
+/* Compact non-scrollable Login page with comfortable breathing room */
+body.auth-page--login {
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 20px !important;
+}
+body.auth-page--login > .auth-shell {
+    width: min(100%, 460px) !important;
+    margin: auto !important;
+}
+body.auth-page--login .auth-card {
+    padding: 32px 32px 28px !important;
+    border-radius: var(--r-card) !important;
+}
+body.auth-page--login .auth-card .form-input {
+    min-height: 48px !important;
+    padding: 11px 16px !important;
+    font-size: 0.92rem !important;
+    margin-top: 4px !important;
+}
+body.auth-page--login .auth-card button[type="submit"] {
+    min-height: 48px !important;
+    font-size: 0.98rem !important;
+    padding: 12px 18px !important;
+    margin-top: 6px !important;
+}
+body.auth-page--login .auth-google-button {
+    min-height: 48px !important;
+    padding: 10px 18px !important;
+    font-size: 0.95rem !important;
+    margin-bottom: 4px !important;
+}
+body.auth-page--login .auth-card > p[aria-hidden="true"],
+body.auth-page--login .auth-card > div[aria-hidden="true"] {
+    margin-block: 20px !important;
+}
+body.auth-page--login .auth-card > aside {
+    margin-top: 20px !important;
+}
 .auth-site-nav { box-sizing:border-box; width:min(100%,calc(var(--container-home) - 2 * var(--gutter-home))); min-height:64px; margin-inline:auto; padding:8px clamp(12px,2vw,20px); display:flex; align-items:center; justify-content:space-between; gap:clamp(8px,1.5vw,20px); border:var(--border); border-radius:var(--r-pill); background:var(--brand); color:var(--ink); box-shadow:var(--shadow); }
 .auth-site-logo { flex:0 0 auto; padding:6px 13px; border:2px solid var(--ink); border-radius:var(--r-pill); background:var(--cream); box-shadow:2px 2px 0 var(--ink); font-family:'Fredoka',sans-serif; font-size:1.12rem; font-weight:700; line-height:1.2; white-space:nowrap; }
 .auth-site-logo strong { color:var(--brand-ink); }
@@ -249,6 +302,7 @@ body:is(.seller-dashboard,.admin-dashboard) .app-sidebar { background: var(--whi
 body:is(.seller-dashboard,.admin-dashboard) .app-topbar { background: var(--white-warm); border-bottom: var(--border); }
 body:is(.seller-dashboard,.admin-dashboard) .app-sidebar :is(a,button), body:is(.seller-dashboard,.admin-dashboard) .app-topbar :is(a,button) { min-height:44px; }
 body:is(.seller-dashboard,.admin-dashboard) .app-sidebar .sidebar-link.active { background: var(--cream-2); color: var(--ink); }
+body:is(.seller-dashboard,.admin-dashboard) .app-sidebar .sidebar-link.active svg { color: var(--ink) !important; }
 body:is(.seller-dashboard,.admin-dashboard) main { padding: clamp(16px,3vw,32px) !important; }
 body:is(.seller-dashboard,.admin-dashboard) .admin-flash { border:var(--border); border-radius:var(--r-card); box-shadow:var(--shadow); background:var(--white-warm); }
 body:is(.seller-dashboard,.admin-dashboard) :is(.admin-card,.stat-card,.form-input,.btn-primary,.btn-outline,.badge) { border-width:var(--border-w); }
@@ -262,6 +316,18 @@ body:is(.seller-dashboard,.admin-dashboard) :is(.rounded-xl,.rounded-2xl,.rounde
 body:is(.seller-dashboard,.admin-dashboard) :is(.border-2,.border-3,.border-4) { border-width:var(--border-w) !important; }
 body:is(.seller-dashboard,.admin-dashboard) button[class], body:is(.seller-dashboard,.admin-dashboard) a[class*="btn-"] { min-height:44px; border-radius:var(--r-pill) !important; }
 body:is(.seller-dashboard,.admin-dashboard) .bg-black\/60 { background-color:color-mix(in srgb,var(--ink) 72%,transparent) !important; backdrop-filter:none !important; }
+body.seller-dashboard .seller-product-filter__link { box-shadow:none !important; }
+body.seller-dashboard .seller-product-filter__link:hover { box-shadow:none !important; }
+body.seller-dashboard .seller-report-page .home-icon-svg { stroke-width:2.5 !important; stroke-linecap:round; stroke-linejoin:round; }
+
+/* Form focus uses a border-color cue so controls never show a second outline ring. */
+body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea):focus:not(header *):not(.home-navbar *) {
+    outline: none !important;
+    outline-offset: 0 !important;
+}
+body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea):focus-visible:not(header *):not(.home-navbar *) {
+    border-color: var(--brand) !important;
+}
 
 /* Constrain wide public content and keep responsive controls from causing overflow. */
 body:not(.home-page) :is(.max-w-\[1400px\],.max-w-6xl,.max-w-7xl) { max-width: var(--container); padding-inline:var(--gutter) !important; }

@@ -6,6 +6,7 @@
     <title>@yield('title', 'Penjual') | SiswaMart</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -183,7 +184,7 @@
             left: 24px;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            box-shadow: 4px 4px 0 var(--ink);
             padding: 12px 20px;
             border-radius: 8px;
             display: flex;
@@ -213,8 +214,10 @@
         .badge-pending { background: #fef7e0; color: #b06000; }
         .badge-ditolak { background: #fce8e6; color: #c5221f; }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/siswamart-theme.css') }}">
 </head>
-<body class="flex min-h-screen">
+<body class="seller-dashboard flex min-h-screen">
+    
 
     {{-- ── Sidebar ── --}}
     <aside class="app-sidebar hidden lg:flex">
@@ -254,8 +257,8 @@
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-sm font-bold text-gray-900 truncate">{{ Auth::user()->name }}</p>
-                    <p class="text-gray-500 font-semibold text-xs truncate">{{ Auth::user()->penjual?->nama_toko ?? 'Toko' }}</p>
+                    <p class="text-sm font-bold text-[var(--ink)] truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-[var(--ink-soft)] font-semibold text-xs truncate">{{ Auth::user()->penjual?->nama_toko ?? 'Toko' }}</p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -317,5 +320,8 @@
             if (el) { el.style.transition = 'opacity 0.4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }
         }, 3500);
     </script>
+<x-back-floating :fallback="route('penjual.dashboard')" />
 </body>
 </html>
+
+

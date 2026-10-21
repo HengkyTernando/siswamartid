@@ -12,7 +12,17 @@
         <h2 class="text-xl font-bold text-[var(--text-main)]">Edit Produk</h2>
     </div>
 
-    @if($produk->status === 'ditolak')
+    @if($produk->pending_action)
+        <div class="mb-6 rounded-2xl border-2 border-[var(--ink)] bg-[var(--warning-bg)] p-4 shadow-[3px_3px_0_var(--ink)]">
+            <p class="text-sm font-bold text-[var(--ink)]">Pengajuan menunggu persetujuan Admin.</p>
+            <p class="mt-1 text-xs text-[var(--ink-soft)]">Kamu belum bisa mengirim perubahan lain sebelum Admin memutuskan pengajuan ini.</p>
+        </div>
+    @elseif($produk->alasan_ditolak && $produk->status !== 'ditolak')
+        <div class="mb-6 rounded-2xl border-2 border-[var(--ink)] bg-[var(--warning-bg)] p-4 shadow-[3px_3px_0_var(--ink)]">
+            <p class="text-sm font-bold text-[var(--ink)]">Pengajuan sebelumnya ditolak.</p>
+            <p class="mt-1 text-xs text-[var(--ink-soft)]">Catatan Admin: {{ $produk->alasan_ditolak }}</p>
+        </div>
+    @elseif($produk->status === 'ditolak')
         <div class="bg-[#fce8e6] border border-[#ea4335] rounded-2xl p-4 mb-6 shadow-sm">
             <div class="flex items-start gap-3">
                 <svg class="w-5 h-5 text-[#ea4335] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -31,7 +41,7 @@
                 <svg class="w-5 h-5 text-[#b06000] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
                     <p class="text-sm font-bold text-[#b06000]">Menunggu Moderasi</p>
-                    <p class="text-xs text-[#b06000]/90 mt-0.5">Produkmu sedang ditinjau. Perubahan yang disimpan akan membuatnya tetap berstatus Pending sampai disetujui Admin.</p>
+                    <p class="text-xs text-[#b06000]/90 mt-0.5">Produkmu sedang ditinjau. Setiap perubahan yang kamu ajukan akan menunggu persetujuan Admin.</p>
                 </div>
             </div>
         </div>
@@ -99,7 +109,7 @@
                         <label class="block text-sm font-medium text-[var(--text-main)] mb-1.5">Status Ketersediaan</label>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="stok" value="tersedia" {{ old('stok', $produk->stok === 'ready' ? 'tersedia' : $produk->stok) === 'tersedia' ? 'checked' : '' }} class="w-4 h-4 text-[#1a73e8] border-[var(--border-color)] focus:ring-[#1a73e8]">
+                                <input type="radio" name="stok" value="tersedia" {{ old('stok', $produk->stok) === 'tersedia' ? 'checked' : '' }} class="w-4 h-4 text-[#1a73e8] border-[var(--border-color)] focus:ring-[#1a73e8]">
                                 <span class="text-sm text-[var(--text-main)]">Ready (Tersedia)</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
@@ -107,7 +117,7 @@
                                 <span class="text-sm text-[var(--text-main)]">Pre-Order</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="stok" value="habis" {{ old('stok', $produk->stok === 'ready' ? 'tersedia' : $produk->stok) === 'habis' ? 'checked' : '' }} class="w-4 h-4 text-[#1a73e8] border-[var(--border-color)] focus:ring-[#1a73e8]">
+                                <input type="radio" name="stok" value="habis" {{ old('stok', $produk->stok) === 'habis' ? 'checked' : '' }} class="w-4 h-4 text-[#1a73e8] border-[var(--border-color)] focus:ring-[#1a73e8]">
                                 <span class="text-sm text-[var(--text-main)]">Habis</span>
                             </label>
                         </div>
@@ -124,10 +134,10 @@
                 </div>
                 <div class="p-5">
                     <p class="text-xs text-[var(--text-muted)] mb-5 leading-relaxed">
-                        Jika produk sudah Aktif, perubahan pada <b>Nama</b>, <b>Kategori</b>, <b>Harga</b>, atau <b>Foto</b> akan mengembalikannya ke status <span class="font-bold">Pending (Menunggu Moderasi)</span>.
+                        Perubahan akan diperiksa Admin terlebih dahulu. Informasi produk yang tampil tetap seperti saat ini sampai perubahan disetujui.
                     </p>
                     <button type="button" onclick="document.getElementById('produkForm').submit()" class="w-full btn-primary justify-center py-2.5">
-                        Simpan Perubahan
+                        Ajukan Perubahan
                     </button>
                     <div class="mt-3 text-center">
                         <a href="{{ route('penjual.produk.index') }}" class="text-xs text-[#1a73e8] hover:underline font-medium">Batal</a>
@@ -157,3 +167,4 @@
     </div>
 
 @endsection
+

@@ -9,14 +9,17 @@ class CategoryController extends ApiController
 {
     public function index()
     {
-        $categories = Kategori::query()->withCount(['produk' => fn ($products) => $products->where('status', 'aktif')])->orderBy('nama')->get();
+        $categories = Kategori::query()
+            ->withCount(['produk' => fn ($products) => $products->publicVisible()])
+            ->orderBy('nama')
+            ->get();
 
         return $this->success($categories->map(fn (Kategori $category) => $this->categoryData($category)), 'Daftar kategori berhasil diambil');
     }
 
     public function products(Kategori $category, Request $request, ProductController $products)
     {
-        $query = $category->produk()->with(['kategori', 'penjual'])->where('status', 'aktif')->latest();
+        $query = $category->produk()->publicVisible()->with(['kategori', 'penjual'])->latest();
         $perPage = min(max((int) $request->input('per_page', 12), 1), 50);
         $result = $query->paginate($perPage)->withQueryString();
         $result->through(fn ($product) => $products->productData($product));
@@ -36,7 +39,7 @@ class CategoryController extends ApiController
             'name' => $category->nama,
             'slug' => $category->slug,
             'icon' => $category->icon,
-            'product_count' => $category->produk_count ?? $category->produk()->where('status', 'aktif')->count(),
+            'product_count' => $category->produk_count ?? $category->produk()->publicVisible()->count(),
         ];
     }
 }

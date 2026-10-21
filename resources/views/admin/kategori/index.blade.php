@@ -4,6 +4,22 @@
 @section('page-title', 'Kelola Kategori')
 
 @section('content')
+    @php
+        $categoryIcons = [
+            'dessert' => 'cake',
+            'makanan' => 'burger',
+            'makanan-berat' => 'burger',
+            'minuman' => 'glass-full',
+            'snack' => 'cookie',
+        ];
+        $fallbackCategoryImages = [
+            'dessert' => 'images/category/dessert.png',
+            'makanan' => 'images/category/makanan_berat.png',
+            'makanan-berat' => 'images/category/makanan_berat.png',
+            'minuman' => 'images/category/minuman.png',
+            'snack' => 'images/category/snack.png',
+        ];
+    @endphp
 
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -45,6 +61,7 @@
                 <thead class="bg-[var(--bg-hover)] border-b border-[var(--border-color)]">
                     <tr>
                         <th class="px-5 py-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-16 text-center">No</th>
+                        <th class="px-5 py-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider text-center">Ikon</th>
                         <th class="px-5 py-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nama Kategori</th>
                         <th class="px-5 py-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Slug</th>
                         <th class="px-5 py-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider text-center">Jumlah Produk</th>
@@ -56,6 +73,12 @@
                     @forelse($kategoris as $index => $kategori)
                     <tr class="hover:bg-[var(--bg-hover)] transition-colors">
                         <td class="px-5 py-4 text-center font-medium">{{ $kategoris->firstItem() + $index }}</td>
+                        @php($categoryIcon = array_key_exists($kategori->icon, $iconOptions) ? $kategori->icon : ($fallbackCategoryImages[$kategori->slug] ?? 'images/category/snack.png'))
+                        <td class="px-5 py-4 text-center">
+                            <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--border-color)] bg-[var(--cream-2)] p-1.5">
+                                <x-public.home-icon :name="$categoryIcons[$kategori->slug] ?? 'package'" :size="24" class="text-[var(--text-main)]" aria-hidden="true" />
+                            </span>
+                        </td>
                         <td class="px-5 py-4">
                             <div class="font-semibold text-[var(--text-main)]">{{ $kategori->nama }}</div>
                         </td>
@@ -72,7 +95,7 @@
                         </td>
                         <td class="px-5 py-4">
                             <div class="flex items-center justify-end gap-2">
-                                <button type="button" data-kategori-id="{{ $kategori->id }}" data-kategori-nama="{{ $kategori->nama }}" data-kategori-slug="{{ $kategori->slug }}" onclick="openEditModalFromButton(this)"
+                                <button type="button" data-kategori-id="{{ $kategori->id }}" data-kategori-nama="{{ $kategori->nama }}" data-kategori-slug="{{ $kategori->slug }}" data-kategori-icon="{{ $categoryIcon }}" onclick="openEditModalFromButton(this)"
                                    class="btn-outline text-xs px-2.5 py-1">
                                     Edit
                                 </button>
@@ -88,7 +111,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-5 py-12">
+                        <td colspan="7" class="px-5 py-12">
                             <div class="flex flex-col items-center justify-center text-[var(--text-muted)]">
                                 <svg class="w-16 h-16 mb-4 text-[var(--color-primary)] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                 <p class="font-bold text-lg text-[var(--text-main)] mb-1">Belum ada kategori</p>
@@ -118,6 +141,21 @@
                         <div class="mb-4">
                             <label for="nama" class="block text-sm font-bold text-[var(--text-main)] mb-1">Nama Kategori <span class="text-[#ea4335]">*</span></label>
                             <input type="text" name="nama" id="nama" class="form-input" placeholder="Contoh: Makanan & Minuman" required oninput="generateSlug(this.value, 'slug')">
+                        </div>
+                        <div class="mb-4">
+                            <label for="icon" class="block text-sm font-bold text-[var(--text-main)] mb-1">Ikon Kategori <span class="text-[#ea4335]">*</span></label>
+                            <div class="flex items-center gap-3">
+                                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--border-color)] bg-[var(--cream-2)] p-2">
+                                    <img id="create_icon_preview" src="{{ asset('images/category/dessert.png') }}" alt="Pratinjau ikon kategori" class="h-full w-full object-contain">
+                                </span>
+                                <select name="icon" id="icon" class="form-input" required onchange="previewCategoryIcon(this, 'create_icon_preview')">
+                                    <option value="" disabled selected>Pilih ikon kategori</option>
+                                    @foreach($iconOptions as $iconPath => $iconLabel)
+                                        <option value="{{ $iconPath }}">{{ $iconLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="mt-1 text-xs text-[var(--text-muted)]">Pilih ikon yang tersedia di katalog SiswaMart.</p>
                         </div>
                         <div class="mb-4">
                             <label for="slug" class="block text-sm font-bold text-[var(--text-main)] mb-1">Slug <span class="text-[var(--text-muted)] font-normal">(Otomatis)</span></label>
@@ -154,6 +192,19 @@
                             <input type="text" name="nama" id="edit_nama" class="form-input" required oninput="generateSlug(this.value, 'edit_slug')">
                         </div>
                         <div class="mb-4">
+                            <label for="edit_icon" class="block text-sm font-bold text-[var(--text-main)] mb-1">Ikon Kategori <span class="text-[#ea4335]">*</span></label>
+                            <div class="flex items-center gap-3">
+                                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--border-color)] bg-[var(--cream-2)] p-2">
+                                    <img id="edit_icon_preview" src="{{ asset('images/category/dessert.png') }}" alt="Pratinjau ikon kategori" class="h-full w-full object-contain">
+                                </span>
+                                <select name="icon" id="edit_icon" class="form-input" required onchange="previewCategoryIcon(this, 'edit_icon_preview')">
+                                    @foreach($iconOptions as $iconPath => $iconLabel)
+                                        <option value="{{ $iconPath }}">{{ $iconLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-4">
                             <label for="edit_slug" class="block text-sm font-bold text-[var(--text-main)] mb-1">Slug</label>
                             <input type="text" name="slug" id="edit_slug" class="form-input" required>
                             <p class="text-[10px] text-[var(--text-muted)] mt-1">Slug bisa kamu ubah manual jika diperlukan.</p>
@@ -181,16 +232,23 @@
             document.getElementById(modalId).classList.add('hidden');
         }
 
-        function openEditModal(id, nama, slug) {
+        function openEditModal(id, nama, slug, icon) {
             const form = document.getElementById('editForm');
             form.action = `/admin/categories/${id}`;
             document.getElementById('edit_nama').value = nama;
             document.getElementById('edit_slug').value = slug;
+            const iconSelect = document.getElementById('edit_icon');
+            iconSelect.value = icon;
+            previewCategoryIcon(iconSelect, 'edit_icon_preview');
             openModal('editModal');
         }
 
         function openEditModalFromButton(button) {
-            openEditModal(button.dataset.kategoriId, button.dataset.kategoriNama, button.dataset.kategoriSlug);
+            openEditModal(button.dataset.kategoriId, button.dataset.kategoriNama, button.dataset.kategoriSlug, button.dataset.kategoriIcon);
+        }
+
+        function previewCategoryIcon(select, previewId) {
+            document.getElementById(previewId).src = `/${select.value}`;
         }
 
         function generateSlug(text, targetId) {
@@ -205,3 +263,4 @@
     </script>
 
 @endsection
+

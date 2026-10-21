@@ -1,10 +1,10 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-lg font-medium text-[var(--ink)]">
             {{ __('Ubah Password') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-[var(--ink-soft)]">
             {{ __('Gunakan password yang panjang dan unik agar akunmu tetap aman.') }}
         </p>
     </header>
@@ -40,9 +40,10 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
+                    class="text-sm text-[var(--ink-soft)]"
                 >{{ __('Tersimpan.') }}</p>
             @endif
         </div>
     </form>
 </section>
+

@@ -353,7 +353,7 @@
     {{-- ============================================================
          RATING & ULASAN
          ============================================================ --}}
-    <div class="grid lg:grid-cols-3 gap-10">
+    <div id="ulasan" class="grid scroll-mt-28 lg:grid-cols-3 gap-10">
 
         <div class="lg:col-span-2 space-y-10">
 
@@ -382,6 +382,13 @@
 
 
                 {{-- Success Message --}}
+                @if(session('review_warning'))
+                    <div class="relative z-10 mb-6 flex items-start gap-3 rounded-2xl border-2 border-[var(--color-border)] bg-[#FFE79F] px-5 py-4 font-bold text-[var(--color-text)] shadow-solid-sm" role="alert">
+                        <x-public.home-icon name="alert-triangle" :size="20" class="mt-0.5 shrink-0" aria-hidden="true" />
+                        <p class="text-sm sm:text-base">{{ session('review_warning') }}</p>
+                    </div>
+                @endif
+
                 @if(session('success'))
 
                     <div

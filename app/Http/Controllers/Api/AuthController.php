@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends ApiController
@@ -30,33 +28,11 @@ class AuthController extends ApiController
 
     public function register(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'nama_toko' => ['required', 'string', 'max:255'],
-            'nomor_whatsapp' => ['required', 'string', 'max:20'],
-        ]);
-
-        $user = DB::transaction(function () use ($validated) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => $validated['password'],
-                'role' => 'penjual',
-                'is_active' => true,
-            ]);
-
-            $user->penjual()->create([
-                'nama_toko' => $validated['nama_toko'],
-                'nomor_whatsapp' => $validated['nomor_whatsapp'],
-            ]);
-
-            return $user;
-        });
-        $token = $user->createToken('siswamart-mobile')->plainTextToken;
-
-        return $this->success(['user' => $this->userData($user), 'token' => $token], 'Registrasi berhasil', 201);
+        return $this->error(
+            'Pendaftaran mandiri akun penjual melalui API tidak diizinkan. Akun penjual dikelola secara terpusat oleh pihak sekolah.',
+            [],
+            403
+        );
     }
 
     public function logout(Request $request)

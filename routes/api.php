@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SellerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,11 +23,17 @@ Route::post('/register', [AuthController::class, 'register']);
 // Products
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
+Route::post('/products/{product}/whatsapp', [ProductController::class, 'trackWhatsapp']);
+Route::post('/products/{product}/view', [ProductController::class, 'trackView']);
 
 // Categories
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}', [CategoryController::class, 'show']);
 Route::get('/categories/{category}/products', [CategoryController::class, 'products']);
+
+// Sellers - Public
+Route::get('/sellers', [SellerController::class, 'index']);
+Route::get('/sellers/{seller}', [SellerController::class, 'show']);
 
 // Reviews - Public
 Route::get('/products/{product}/reviews', [ReviewController::class, 'index']);
@@ -62,4 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::patch('/profile', [ProfileController::class, 'update']);
+
+    // Seller Dashboard & Store Status
+    Route::get('/seller/dashboard', [SellerController::class, 'dashboard']);
+    Route::patch('/seller/store-status', [SellerController::class, 'toggleStoreStatus']);
 });

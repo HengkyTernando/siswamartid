@@ -5,10 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kategori;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class KategoriController extends Controller
 {
+    private const ICON_OPTIONS = [
+        'images/category/dessert.png' => 'Dessert',
+        'images/category/makanan_berat.png' => 'Makanan Berat',
+        'images/category/minuman.png' => 'Minuman',
+        'images/category/snack.png' => 'Snack',
+    ];
+
     public function index(Request $request)
     {
         $search = $request->get('search');
@@ -21,18 +29,22 @@ class KategoriController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.kategori.index', compact('kategoris', 'search'));
+        $iconOptions = self::ICON_OPTIONS;
+
+        return view('admin.kategori.index', compact('kategoris', 'search', 'iconOptions'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'nama' => 'required|string|max:100|unique:kategori,nama',
+            'icon' => ['required', 'string', Rule::in(array_keys(self::ICON_OPTIONS))],
         ]);
 
         Kategori::create([
             'nama' => $request->nama,
             'slug' => Str::slug($request->nama),
+            'icon' => $request->icon,
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Kategori berhasil ditambahkan.');
@@ -43,11 +55,13 @@ class KategoriController extends Controller
         $request->validate([
             'nama' => 'required|string|max:100|unique:kategori,nama,' . $category->id,
             'slug' => 'required|string|max:100|unique:kategori,slug,' . $category->id,
+            'icon' => ['required', 'string', Rule::in(array_keys(self::ICON_OPTIONS))],
         ]);
 
         $category->update([
             'nama' => $request->nama,
             'slug' => Str::slug($request->slug), // allow slug update
+            'icon' => $request->icon,
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Kategori berhasil diperbarui.');

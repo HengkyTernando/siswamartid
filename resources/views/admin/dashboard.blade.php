@@ -6,7 +6,7 @@
 @section('content')
 
     <div class="mb-8">
-        <h2 class="text-2xl font-bold text-[var(--text-main)]">Selamat datang, {{ Auth::user()->name }} 👋</h2>
+        <h2 class="text-2xl font-bold text-[var(--text-main)]">Selamat datang, {{ Auth::user()->name }}</h2>
         <p class="text-[var(--text-muted)] mt-1 text-sm">Atur penjual, produk, dan ulasan SiswaMart dari satu tempat.</p>
     </div>
 
@@ -41,7 +41,7 @@
                 </div>
                 <span class="text-xs font-medium px-2 py-1 rounded-full bg-[#fef7e0] text-[#b06000]">Perlu Moderasi</span>
             </div>
-            <p class="text-3xl font-display font-bold text-[var(--text-main)]">{{ \App\Models\Produk::where('status', 'pending')->count() }}</p>
+            <p class="text-3xl font-display font-bold text-[var(--text-main)]">{{ \App\Models\Produk::where(function ($pending) { $pending->where('status', 'pending')->orWhereNotNull('pending_action'); })->count() }}</p>
             <p class="text-[var(--text-muted)] text-xs mt-1">Menunggu persetujuan</p>
         </div>
     </div>

@@ -23,6 +23,16 @@ class EnsurePenjual
             abort(403, 'Akses ditolak. Halaman ini khusus untuk Penjual.');
         }
 
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun toko Anda sedang dinonaktifkan oleh sekolah. Silakan hubungi admin.',
+            ]);
+        }
+
         return $next($request);
     }
 }

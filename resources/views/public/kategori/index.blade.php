@@ -61,7 +61,12 @@
         this.validateInput();
         if (this.min_price == 0) this.min_price = '';
         if (this.max_price == 50000) this.max_price = '';
-        $refs.mainForm.submit();
+        const form = this.$refs.mainForm;
+        this.$refs.searchInput.value = this.q;
+        this.$refs.sortInput.value = this.sort;
+        this.$refs.minPriceInput.value = this.min_price;
+        this.$refs.maxPriceInput.value = this.max_price;
+        form.submit();
     },
     resetFilter() {
         this.min_price = '';
@@ -71,10 +76,10 @@
 }">
     
     <form x-ref="mainForm" action="{{ route('public.kategori.index') }}" method="GET" class="hidden">
-        <input type="hidden" name="q" x-model="q">
-        <input type="hidden" name="sort" x-model="sort">
-        <input type="hidden" name="min_price" x-model="min_price">
-        <input type="hidden" name="max_price" x-model="max_price">
+        <input type="hidden" name="q" x-ref="searchInput" x-model="q">
+        <input type="hidden" name="sort" x-ref="sortInput" x-model="sort">
+        <input type="hidden" name="min_price" x-ref="minPriceInput" x-model="min_price">
+        <input type="hidden" name="max_price" x-ref="maxPriceInput" x-model="max_price">
     </form>
 
     <div class="max-w-[1400px] mx-auto px-6 lg:px-[60px]">
@@ -203,4 +208,3 @@
 </div>
 
 @endsection
-
